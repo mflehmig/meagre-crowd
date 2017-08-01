@@ -350,7 +350,7 @@ fi
 if [[ -f ${INSTALL_LIB_DIR}/libblas.so ]]; then
   BLAS_PATH=${INSTALL_LIB_DIR}
 else
-  BLAS_PATH=/usr/lib
+  BLAS_PATH=/usr/lib64
 fi
 [[ ! -f ${BLAS_PATH}/libblas.so ]] && err blas "can't find libblas.so at ${BLAS_PATH}"
 BLAS_DLIB="-L${BLAS_PATH} -lblas"
@@ -388,7 +388,7 @@ fi
 if [[ -f ${INSTALL_LIB_DIR}/liblapack.so ]]; then
   LAPACK_PATH=${INSTALL_LIB_DIR}
 else
-  LAPACK_PATH=/usr/lib
+  LAPACK_PATH=/usr/lib64
 fi
 [[ ! -f ${LAPACK_PATH}/liblapack.so ]] && err lapack "can't find liblapack.so at ${LAPACK_PATH}"
 LAPACK_DLIB="-L${LAPACK_PATH} -llapack"
@@ -507,6 +507,7 @@ if [[ -n $SCALAPACK ]]; then
   MAKE=${MAKE_SAVE}
 fi
 SCALAPACK_PATH=${INSTALL_LIB_DIR}
+SCALAPACK_PATH=/usr/lib64/openmpi/lib/
 [[ ! -f ${SCALAPACK_PATH}/libscalapack.so ]] && err scalapack "can't find libscalapack.so at ${SCALAPACK_PATH}"
 info "  using ${SCALAPACK_PATH}/libscalapack.so"
 SCALAPACK_DLIB="-L${SCALAPACK_PATH} -lscalapack"
@@ -541,12 +542,14 @@ if [[ -n $AMD ]]; then
   cp Lib/libcamd.a  ${INSTALL_LIB_DIR}/
   a2so ${INSTALL_LIB_DIR}/libcamd.a -lm
 fi
-[[ ! -f ${INSTALL_LIB_DIR}/libamd.so ]] && err amd "can't find libamd.so ${INSTALL_LIB_DIR}"
-[[ ! -f ${INSTALL_LIB_DIR}/libcamd.so ]] && err amd "can't find libcamd.so ${INSTALL_LIB_DIR}"
-AMD_DLIB="-L${INSTALL_LIB_DIR} -lamd"
-CAMD_DLIB="-L${INSTALL_LIB_DIR} -lcamd"
-info "  using ${INSTALL_LIB_DIR}/libamd.so"
-info "  using ${INSTALL_LIB_DIR}/libcamd.so"
+AMD_PATH=/usr/lib64
+
+[[ ! -f ${AMD_PATH}/libamd.so ]] && err amd "can't find libamd.so ${AMD_PATH}"
+[[ ! -f ${AMD_PATH}/libcamd.so ]] && err camd "can't find libcamd.so ${AMD_PATH}"
+AMD_DLIB="-L${AMD_PATH} -lamd"
+CAMD_DLIB="-L${AMD_LIB} -lcamd"
+info "  using ${AMD_LIB}/libamd.so"
+info "  using ${AMD_LIB}/libcamd.so"
 
 if [[ -n $CCOLAMD ]]; then
   info "CCOLAMD"
