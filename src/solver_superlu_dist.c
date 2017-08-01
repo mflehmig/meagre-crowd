@@ -32,7 +32,7 @@
 #include <math.h>
 
 typedef struct {
-  superlu_options_t options;
+  superlu_dist_options_t options;
   gridinfo_t grid;
   int active; // is this node active in the superlu grid?
   int rank0; // who is the old rank0 in the new communicator
@@ -122,7 +122,7 @@ void solver_evaluate_superlu_dist( solver_state_t* s, matrix_t* b, matrix_t* x )
   // initialize structures
   SuperLUStat_t stat;
   ScalePermstructInit(p->A.nrow, p->A.ncol, &(p->scale_permute));
-  LUstructInit(p->A.nrow, p->A.ncol, &(p->lu));
+  LUstructInit(/*p->A.nrow,*/ p->A.ncol, &(p->lu));
   PStatInit(&stat);
 
   // setup for solver
