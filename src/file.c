@@ -916,7 +916,7 @@ static
       // Note that Matlab will save('-v4'...) a sparse matrix
       // to version 4 format without complaint but it appears
       // to be gibberish as far as MatIO is concerned
-      sparse_t* st = t->data;
+      mat_sparse_t* st = t->data;
       A->nz = st->ndata; //st->nzmax has the actual size of the allocated st->data
       A->format = SM_CSC;
       // transfer the data pointer into our strucut
