@@ -147,7 +147,7 @@ void inline clear_matrix( matrix_t* m ) {
 }
 
 // from enum, returns width of ea. value in the matrix in bytes
-inline size_t _data_width( const enum matrix_data_type_t t );
+//inline size_t _data_width( const enum matrix_data_type_t t );
 inline size_t _data_width( const enum matrix_data_type_t t ) {
   switch ( t ) {
     case REAL_SINGLE:

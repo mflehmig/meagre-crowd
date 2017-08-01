@@ -126,4 +126,6 @@ int validate_matrix( matrix_t* m );
 // (indenting and/or matrix name)
 void printf_matrix( char const *const pre, matrix_t* m );
 
+// from enum, returns width of ea. value in the matrix in bytes
+size_t _data_width( const enum matrix_data_type_t t );
 #endif
