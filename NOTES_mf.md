@@ -40,12 +40,12 @@ Adopt *bebop_make/Makefile.include.linux* to your needs/wishes/requirements, e.g
 
     cd ..
     ./autogen
-    ./configure CC=mpicc CFLAGS='/PATH/meagre-crowd.git/3rdParty/include/' LDFLAGS='-L/PATH/meagre-crowd.git/3rdParty/lib/ -L/PATH/meagre-crowd.git/3rdParty/lib/' [--prefix=/PATH/TO/INSTALLATION]
-
+    ./configure CC=mpicc CFLAGS='/PATH/meagre-crowd.git/3rdParty/include/' \
+                LDFLAGS='-L/PATH/meagre-crowd.git/3rdParty/lib/ -Wl,-rpath,/PATH/meagre-crowd.git/3rdParty/lib/' \
+                CPPFLAGS="-I/PATH/meagre-crowd.git/3rdParty/include/ -I/usr/include/suitesparse/ -I/usr/include/openmpi-x86_64/superlu_dist/ \
+                [--prefix=/PATH/TO/INSTALLATION]
     make
     [make install]
-
-
 
 
 ### Taurus
