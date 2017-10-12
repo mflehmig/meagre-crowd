@@ -26,8 +26,10 @@ Adopt *bebop_make/Makefile.include.linux* to your needs/wishes/requirements, e.g
 
     cd bebop_util/ && make
 
+    cd ..
     mkdir lib
-    mkdir -p include/bebop/scm
+    mkdir -p include/bebop/smc
+    cd sparse_matrix_converter/ && make && cd ../
 
     cp sparse_matrix_converter/include/bebop/smc/*.h include/bebop/scm/
     cp sparse_matrix_converter/lib* lib/
@@ -106,7 +108,7 @@ Adopt *bebop_make/Makefile.include.linux* to your needs/wishes/requirements, e.g
 
 
 
-# Know Issus and Errors
+# Known Issues and Errors
 
 ## Runtime
 * input error: Failed to load matrix:
