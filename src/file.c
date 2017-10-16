@@ -299,15 +299,14 @@ int readmm_data_dense(FILE* f, matrix_t* A, int datatype, int symmetry, int rows
   }
 
   // read in the data
-  int i;
   double* d = A->dd;
   const int CHARS = 1025;
   char line [CHARS];
   char* lp;
-  for(i=0; i<nz; i++) {
+  lp="1";
+  while(lp!=NULL){
     lp = fgets(line, CHARS, f);
-    if(lp == NULL)
-      return -2; // bad read
+  }
 
     // get the data
     int n;
@@ -329,10 +328,9 @@ int readmm_data_dense(FILE* f, matrix_t* A, int datatype, int symmetry, int rows
         assert(0);
 	break;
     }
+    return 0;
   }
 
-  return 0;
-}
 
 // TODO refactor and merge with readmm_data_dense?
 int readmm_data_sparse(FILE* f, matrix_t* A, int datatype, int symmetry, int rows, int cols, int nz) {
@@ -383,13 +381,13 @@ int readmm_data_sparse(FILE* f, matrix_t* A, int datatype, int symmetry, int row
   int* ii = (int*) A->ii;
   int* jj = (int*) A->jj;
   double* d = A->dd;
-  const int CHARS = 1025;
+  const int CHARS = 1025; //can only read 1024 chars per line
   char line [CHARS];
-  char* lp;
-  int i;
-  for(i=0; i<nz; i++) {
+  char* lp = NULL;
+  int i=0;
+  for(i=0; i<nz; i++){
     lp = fgets(line, CHARS, f);
-    if(lp == NULL)
+    if(lp == NULL) // fgets returns NULL if assumed line is already beyond EOF
       return -2; // bad read
 
     // get the data
@@ -415,6 +413,7 @@ int readmm_data_sparse(FILE* f, matrix_t* A, int datatype, int symmetry, int row
         assert(0);
 	break;
     }
+    i++;
   }
 
   return 0;
@@ -654,6 +653,7 @@ int load_matrix( char* n, matrix_t* A ) {
     case MATRIX_MARKET:  ret = readmm( n, A, NULL ); break; // NULL = ignore comments
     case MATLAB:         ret = read_mat( n, A ); break;
     case HARWELL_BOEING: ret = 100; assert(0); break; // shouldn't be able to get here
+    default: fprintf( stderr, "input error: format not recognized");
   }
   if ( ret != 0 ) {
     fprintf( stderr, "input error: Failed to load matrix\n"); // TODO move these printouts to main...

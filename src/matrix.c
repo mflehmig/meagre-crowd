@@ -597,12 +597,20 @@ int _coo2csc( matrix_t* m ) {
   int ierr = sparse_matrix_convert( A, CSC );
   assert( ierr == 0 ); // could fail on malloc?
 
+
+
   // store new matrix
   struct csc_matrix_t* p = A->repr;
   m->format = SM_CSC;
   m->ii = ( unsigned int* ) p->rowidx;
   m->jj = ( unsigned int* ) p->colptr;
   m->dd = p->values;
+
+  //output matrix (first 10 elements)
+    int i;
+    for(i=0;i<10;i++){
+  	 printf("%f %u %u \n", ((float*)m->dd)[i], m->ii[i], m->jj[i]);
+    }
 
   // stupid BeBOP doesn't allocate the last value for CSC
   assert( m->jj[m->n] == m->nz );
@@ -908,7 +916,7 @@ int convert_matrix( matrix_t* m, enum matrix_format_t f, enum matrix_base_t b ) 
         return -1;
       case DROW:
       case DCOL:
-        break; // nothing needs doing
+        break; // nothing needs to be done
       case SM_COO: // adjust row and col
         if ( b == FIRST_INDEX_ZERO ) {
           for ( i = 0;i < ( m->nz );i++ ) {
@@ -953,6 +961,12 @@ int convert_matrix( matrix_t* m, enum matrix_format_t f, enum matrix_base_t b ) 
         break;
     }
     m->base = b;
+  }
+
+  //output matrix
+  int i;
+  for(i=0;i<10;i++){
+    printf("%f %u %u \n", ((float*)m->dd)[i], m->ii[i], m->jj[i]);
   }
 
   int ret1, ret2, ret3;

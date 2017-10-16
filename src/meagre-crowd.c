@@ -333,7 +333,7 @@ int main( int argc, char ** argv ) {
     //destroy_sparse_matrix (A); // TODO can't release it unless we're copying it...
   }
 
-  solver_state_t* state = solver_init( args->solver, args->verbosity, args->mpi_rank, timer );
+  solver_state_t* state = solver_init( args->solver, args->verbosity, args->mpi_rank, timer ); //okay
 
   int r = 0;
   do {

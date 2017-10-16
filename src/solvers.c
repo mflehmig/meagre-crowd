@@ -33,6 +33,12 @@
 
 static inline int _convert_matrix_A( const int solver, matrix_t* A );
 static inline int _convert_matrix_A( const int solver, matrix_t* A ) {
+
+  //output matrix
+  int i;
+  for(i=0;i<10;i++){
+	 printf("%f %u %u \n", ((float*)A->dd)[i], A->ii[i], A->jj[i]);
+  }
   const unsigned int c = solver_lookup[solver].capabilities;
   // symmetry: don't convert unless we have to
   switch(A->sym) {
@@ -476,6 +482,12 @@ void solver_analyze( solver_state_t* s, matrix_t* A ) {
     _convert_matrix_A(solver, A);
   }
   perftimer_inc( s->timer, "analyze", -1 );
+  //output matrix
+  int i;
+  for(i=0;i<10;i++){
+    printf("%f %u %u \n", ((float*)A->dd)[i], A->ii[i], A->jj[i]);
+  }
+
   if ( _valid_solver( solver ) && ( solver_lookup[solver].analyze != NULL ) )
     solver_lookup[solver].analyze( s, A );
 }
