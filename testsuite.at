@@ -22,7 +22,7 @@ AT_COLOR_TESTS
 
 AT_TESTED(AT_PACKAGE_NAME)
 
-m4_define(MC_DATA_FILE_TEST_MM,[AT_DATA([unsym.mm],]m4_include(tests/unsym.mm)[)])
+m4_define(MC_DATA_FILE_TEST_MM,[AT_DATA([unsym.mtx],]m4_include(tests/unsym.mtx)[)])
 m4_define(MC_DATA_FILE_TEST_RB,[AT_DATA([test.rb],]m4_include(tests/test.rb)[)])
 m4_define(MC_DATA_FILE_TEST_HB,[AT_DATA([test.hb],]m4_include(tests/test.hb)[)])
 dnl need to convert the binary file to safe text to stash it in the testsuite script
@@ -33,16 +33,16 @@ m4_define(MC_DATA_FILE_TEST_MAT,
 )
 dnl m4_define(MC_DATA_FILE_TEST_MAT,[AT_DATA([unsym7.mat-xxd],]m4_esyscmd(xxd tests/unsym7.mat)[)])
 dnl  m4_syscmd(xxd -r unsym7.mat-xxd > unsym7.mat)])
-m4_define(MC_DATA_FILE_TEST_MM_SYM,[AT_DATA([sym.mm],]m4_include(tests/sym.mm)[)])
-m4_define(MC_DATA_FILE_TEST_MM_SYM_POSDEF,[AT_DATA([sym_posdef.mm],]m4_include(tests/sym_posdef.mm)[)])
+m4_define(MC_DATA_FILE_TEST_MM_SYM,[AT_DATA([sym.mtx],]m4_include(tests/sym.mtx)[)])
+m4_define(MC_DATA_FILE_TEST_MM_SYM_POSDEF,[AT_DATA([sym_posdef.mtx],]m4_include(tests/sym_posdef.mtx)[)])
 
-m4_define(MC_DATA_FILE_RHS1_MM,[AT_DATA([rhs1.mm],]m4_include(tests/rhs1.mm)[)])
-m4_define(MC_DATA_FILE_ANS1_MM,[AT_DATA([unsym-default-ans.mm],]m4_include(tests/unsym-default-ans.mm)[)])
-m4_define(MC_DATA_FILE_ANS2_MM,[AT_DATA([unsym-rhs1-ans.mm],]m4_include(tests/unsym-rhs1-ans.mm)[)])
-m4_define(MC_DATA_FILE_ANS1_MM_SYM,[AT_DATA([sym-default-ans.mm],]m4_include(tests/sym-default-ans.mm)[)])
-m4_define(MC_DATA_FILE_ANS2_MM_SYM,[AT_DATA([sym-rhs1-ans.mm],]m4_include(tests/sym-rhs1-ans.mm)[)])
-m4_define(MC_DATA_FILE_ANS1_MM_SYM_POSDEF,[AT_DATA([sym_posdef-default-ans.mm],]m4_include(tests/sym_posdef-default-ans.mm)[)])
-m4_define(MC_DATA_FILE_ANS2_MM_SYM_POSDEF,[AT_DATA([sym_posdef-rhs1-ans.mm],]m4_include(tests/sym_posdef-rhs1-ans.mm)[)])
+m4_define(MC_DATA_FILE_RHS1_MM,[AT_DATA([rhs1.mtx],]m4_include(tests/rhs1.mtx)[)])
+m4_define(MC_DATA_FILE_ANS1_MM,[AT_DATA([unsym-default-ans.mtx],]m4_include(tests/unsym-default-ans.mtx)[)])
+m4_define(MC_DATA_FILE_ANS2_MM,[AT_DATA([unsym-rhs1-ans.mtx],]m4_include(tests/unsym-rhs1-ans.mtx)[)])
+m4_define(MC_DATA_FILE_ANS1_MM_SYM,[AT_DATA([sym-default-ans.mtx],]m4_include(tests/sym-default-ans.mtx)[)])
+m4_define(MC_DATA_FILE_ANS2_MM_SYM,[AT_DATA([sym-rhs1-ans.mtx],]m4_include(tests/sym-rhs1-ans.mtx)[)])
+m4_define(MC_DATA_FILE_ANS1_MM_SYM_POSDEF,[AT_DATA([sym_posdef-default-ans.mtx],]m4_include(tests/sym_posdef-default-ans.mtx)[)])
+m4_define(MC_DATA_FILE_ANS2_MM_SYM_POSDEF,[AT_DATA([sym_posdef-rhs1-ans.mtx],]m4_include(tests/sym_posdef-rhs1-ans.mtx)[)])
 
 AT_BANNER([hello-world])
 AT_SETUP([mpi default: 1 node])
@@ -115,15 +115,13 @@ AT_CLEANUP
 
 AT_SETUP([matrix-market files])
 AT_KEYWORDS([file hello])
-MC_DATA_FILE_TEST_RB
-MC_DATA_FILE_TEST_HB
 MC_DATA_FILE_TEST_MM
-AT_CHECK([file],0,[harwell-boeing
-rutherford-boeing
+AT_CHECK([file],0,[
 matrix market
 PASS
 ])
 AT_CLEANUP
+
 
 AT_SETUP([file-based mumps])
 AT_KEYWORDS([mumps-file hello])
@@ -184,8 +182,8 @@ AT_CLEANUP
 AT_SETUP([--input])
 AT_KEYWORDS([func])
 MC_DATA_FILE_TEST_MM
-AT_CHECK(AT_PACKAGE_NAME --input=unsym.mm,0,)
-AT_CHECK(AT_PACKAGE_NAME -i unsym.mm,0,)
+AT_CHECK(AT_PACKAGE_NAME --input=unsym.mtx,0,)
+AT_CHECK(AT_PACKAGE_NAME -i unsym.mtx,0,)
 AT_CHECK(AT_PACKAGE_NAME --input,64,,ignore)
 AT_CHECK(AT_PACKAGE_NAME -i,64,,ignore)
 # TODO support stdin
@@ -205,11 +203,11 @@ AT_CLEANUP
 AT_SETUP([--output])
 AT_KEYWORDS([func])
 MC_DATA_FILE_TEST_MM
-AT_CHECK(AT_PACKAGE_NAME --input=unsym.mm --output=test2.mm,0,)
-AT_CHECK(AT_PACKAGE_NAME -i unsym.mm -o test3.mm,0,)
-AT_CHECK(AT_PACKAGE_NAME --input=unsym.mm --output,64,,ignore)
-AT_CHECK(AT_PACKAGE_NAME -i unsym.mm -o,64,,ignore)
-AT_CHECK(AT_PACKAGE_NAME -i unsym.mm -o -,0,[  x(0)=1.00
+AT_CHECK(AT_PACKAGE_NAME --input=unsym.mtx --output=test2.mtx,0,)
+AT_CHECK(AT_PACKAGE_NAME -i unsym.mtx -o test3.mtx,0,)
+AT_CHECK(AT_PACKAGE_NAME --input=unsym.mtx --output,64,,ignore)
+AT_CHECK(AT_PACKAGE_NAME -i unsym.mtx -o,64,,ignore)
+AT_CHECK(AT_PACKAGE_NAME -i unsym.mtx -o -,0,[  x(0)=1.00
   x(1)=0.43
   x(2)=0.25
   x(3)=-0.09
@@ -221,17 +219,17 @@ AT_SETUP([--right-hand-side])
 AT_KEYWORDS([func])
 MC_DATA_FILE_TEST_MM
 MC_DATA_FILE_RHS1_MM
-AT_CHECK(AT_PACKAGE_NAME --input=unsym.mm --right-hand-side=rhs1.mm,0,)
-AT_CHECK(AT_PACKAGE_NAME -i unsym.mm -b rhs1.mm,0,)
-AT_CHECK(AT_PACKAGE_NAME --input=unsym.mm --right-hand-side,64,,ignore)
-AT_CHECK(AT_PACKAGE_NAME -i unsym.mm -b,64,,ignore)
-AT_CHECK(AT_PACKAGE_NAME -i unsym.mm -b rhs1.mm -o -,0,[  x(0)=1.00
+AT_CHECK(AT_PACKAGE_NAME --input=unsym.mtx --right-hand-side=rhs1.mtx,0,)
+AT_CHECK(AT_PACKAGE_NAME -i unsym.mtx -b rhs1.mtx,0,)
+AT_CHECK(AT_PACKAGE_NAME --input=unsym.mtx --right-hand-side,64,,ignore)
+AT_CHECK(AT_PACKAGE_NAME -i unsym.mtx -b,64,,ignore)
+AT_CHECK(AT_PACKAGE_NAME -i unsym.mtx -b rhs1.mtx -o -,0,[  x(0)=1.00
   x(1)=-0.04
   x(2)=0.25
   x(3)=-0.36
   x(4)=0.25
 ])
-dnl Note that rhs1.mm is different from the default generated right-hand-side so we can see did actually load the file
+dnl Note that rhs1.mtx is different from the default generated right-hand-side so we can see did actually load the file
 AT_CLEANUP
 
 
@@ -242,31 +240,31 @@ MC_DATA_FILE_RHS1_MM
 MC_DATA_FILE_ANS1_MM
 MC_DATA_FILE_ANS2_MM
 dnl check option exists
-AT_CHECK(AT_PACKAGE_NAME --input=unsym.mm --expected-answer=unsym-default-ans.mm --precision=5e-3,0,[PASS
+AT_CHECK(AT_PACKAGE_NAME --input=unsym.mtx --expected-answer=unsym-default-ans.mtx --precision=5e-3,0,[PASS
 ])
-AT_CHECK(AT_PACKAGE_NAME -i unsym.mm -e unsym-default-ans.mm -p 5e-3,0,[PASS
+AT_CHECK(AT_PACKAGE_NAME -i unsym.mtx -e unsym-default-ans.mtx -p 5e-3,0,[PASS
 ])
 dnl check option fails when precision is too high, but default will pass
-AT_CHECK(AT_PACKAGE_NAME -i unsym.mm -e unsym-default-ans.mm -p 0,100,[FAIL
+AT_CHECK(AT_PACKAGE_NAME -i unsym.mtx -e unsym-default-ans.mtx -p 0,100,[FAIL
 ])
-AT_CHECK(AT_PACKAGE_NAME -i unsym.mm -e unsym-default-ans.mm,0,[PASS
+AT_CHECK(AT_PACKAGE_NAME -i unsym.mtx -e unsym-default-ans.mtx,0,[PASS
 ])
 dnl checks that missing arguments are caught
-AT_CHECK(AT_PACKAGE_NAME --input=unsym.mm --expected-answer,64,,ignore)
-AT_CHECK(AT_PACKAGE_NAME -i unsym.mm -e,64,,ignore)
-AT_CHECK(AT_PACKAGE_NAME --input=unsym.mm --precision,64,,ignore)
-AT_CHECK(AT_PACKAGE_NAME -i unsym.mm -p,64,,ignore)
+AT_CHECK(AT_PACKAGE_NAME --input=unsym.mtx --expected-answer,64,,ignore)
+AT_CHECK(AT_PACKAGE_NAME -i unsym.mtx -e,64,,ignore)
+AT_CHECK(AT_PACKAGE_NAME --input=unsym.mtx --precision,64,,ignore)
+AT_CHECK(AT_PACKAGE_NAME -i unsym.mtx -p,64,,ignore)
 dnl check if wrong answer is put in it fails, if proper rhs is used, answer matches
-AT_CHECK(AT_PACKAGE_NAME -i unsym.mm -e unsym-rhs1-ans.mm,100,[FAIL
+AT_CHECK(AT_PACKAGE_NAME -i unsym.mtx -e unsym-rhs1-ans.mtx,100,[FAIL
 ])
-AT_CHECK(AT_PACKAGE_NAME -i unsym.mm -b rhs1.mm -e unsym-rhs1-ans.mm,0,[PASS
+AT_CHECK(AT_PACKAGE_NAME -i unsym.mtx -b rhs1.mtx -e unsym-rhs1-ans.mtx,0,[PASS
 ])
 dnl precision is non-negative
-AT_CHECK(AT_PACKAGE_NAME -i unsym.mm -b rhs1.mm -e unsym-rhs1-ans.mm -p 0.1,0,[PASS
+AT_CHECK(AT_PACKAGE_NAME -i unsym.mtx -b rhs1.mtx -e unsym-rhs1-ans.mtx -p 0.1,0,[PASS
 ])
-AT_CHECK(AT_PACKAGE_NAME -i unsym.mm -b rhs1.mm -e unsym-rhs1-ans.mm -p -0.1,1,,[precision must be non-negative
+AT_CHECK(AT_PACKAGE_NAME -i unsym.mtx -b rhs1.mtx -e unsym-rhs1-ans.mtx -p -0.1,1,,[precision must be non-negative
 ])
-AT_CHECK(AT_PACKAGE_NAME -i unsym.mm -b rhs1.mm -e unsym-rhs1-ans.mm -p abcd,1,,[bad precision (non-floating point number)
+AT_CHECK(AT_PACKAGE_NAME -i unsym.mtx -b rhs1.mtx -e unsym-rhs1-ans.mtx -p abcd,1,,[bad precision (non-floating point number)
 ])
 AT_CLEANUP
 
@@ -275,7 +273,7 @@ AT_CLEANUP
 AT_SETUP([--input formats])
 AT_KEYWORDS([func])
 MC_DATA_FILE_TEST_MM
-AT_CHECK(AT_PACKAGE_NAME -i unsym.mm,0,ignore)
+AT_CHECK(AT_PACKAGE_NAME -i unsym.mtx,0,ignore)
 MC_DATA_FILE_TEST_RB
 AT_CHECK(AT_PACKAGE_NAME -i test.rb,1,,[input error: Sorry Rutherford-Boeing reader is broken
 ])
@@ -295,13 +293,13 @@ m4_define([MC_ARGS_STAGE2],[
 AT_SETUP([--$1])
 AT_KEYWORDS([func])
 MC_DATA_FILE_TEST_MM
-AT_CHECK(AT_PACKAGE_NAME[ --input=unsym.mm --$1],0,ignore)
-AT_CHECK(AT_PACKAGE_NAME[ --input=unsym.mm -$2],0,ignore)
-AT_CHECK(AT_PACKAGE_NAME[ --input=unsym.mm -$2 -$2],0,ignore)
-AT_CHECK(AT_PACKAGE_NAME[ --input=unsym.mm -$2$2],0,ignore)
-AT_CHECK(AT_PACKAGE_NAME[ --input=unsym.mm -$2$2$2],0,ignore)
-AT_CHECK(AT_PACKAGE_NAME[ --input=unsym.mm -$2$2$2],0,ignore)
-AT_CHECK(AT_PACKAGE_NAME[ --input=unsym.mm -$2$2$2$2],0,ignore)
+AT_CHECK(AT_PACKAGE_NAME[ --input=unsym.mtx --$1],0,ignore)
+AT_CHECK(AT_PACKAGE_NAME[ --input=unsym.mtx -$2],0,ignore)
+AT_CHECK(AT_PACKAGE_NAME[ --input=unsym.mtx -$2 -$2],0,ignore)
+AT_CHECK(AT_PACKAGE_NAME[ --input=unsym.mtx -$2$2],0,ignore)
+AT_CHECK(AT_PACKAGE_NAME[ --input=unsym.mtx -$2$2$2],0,ignore)
+AT_CHECK(AT_PACKAGE_NAME[ --input=unsym.mtx -$2$2$2],0,ignore)
+AT_CHECK(AT_PACKAGE_NAME[ --input=unsym.mtx -$2$2$2$2],0,ignore)
 AT_CLEANUP
 ])
 
@@ -311,22 +309,22 @@ MC_ARGS_STAGE2([timing],[t])
 
 m4_define([MC_SOLVER_UNSYM_TESTS],[
 dnl UNSYMMETRIC tests
-AT_CHECK($2 AT_PACKAGE_NAME[ --input=unsym.mm --expected=unsym-default-ans.mm --solver=$1],0,[PASS
+AT_CHECK($2 AT_PACKAGE_NAME[ --input=unsym.mtx --expected=unsym-default-ans.mtx --solver=$1],0,[PASS
 ])
-AT_CHECK($2 AT_PACKAGE_NAME[ --input=unsym.mm --right-hand-side=rhs1.mm --expected=unsym-rhs1-ans.mm --solver=$1],0,[PASS
+AT_CHECK($2 AT_PACKAGE_NAME[ --input=unsym.mtx --right-hand-side=rhs1.mtx --expected=unsym-rhs1-ans.mtx --solver=$1],0,[PASS
 ])
-AT_CHECK($2 AT_PACKAGE_NAME[ --input=unsym.mm --expected=unsym-default-ans.mm -s $1],0,[PASS
+AT_CHECK($2 AT_PACKAGE_NAME[ --input=unsym.mtx --expected=unsym-default-ans.mtx -s $1],0,[PASS
 ])
 ])
 
 
 m4_define([MC_SOLVER_SYM_TESTS],[
 dnl SYMMETRIC tests
-AT_CHECK($2 AT_PACKAGE_NAME[ --input=sym.mm --expected=sym-default-ans.mm --solver=$1],0,[PASS
+AT_CHECK($2 AT_PACKAGE_NAME[ --input=sym.mtx --expected=sym-default-ans.mtx --solver=$1],0,[PASS
 ])
-AT_CHECK($2 AT_PACKAGE_NAME[ --input=sym.mm --right-hand-side=rhs1.mm --expected=sym-rhs1-ans.mm --solver=$1],0,[PASS
+AT_CHECK($2 AT_PACKAGE_NAME[ --input=sym.mtx --right-hand-side=rhs1.mtx --expected=sym-rhs1-ans.mtx --solver=$1],0,[PASS
 ])
-AT_CHECK($2 AT_PACKAGE_NAME[ --input=sym.mm --expected=sym-default-ans.mm -s $1],0,[PASS
+AT_CHECK($2 AT_PACKAGE_NAME[ --input=sym.mtx --expected=sym-default-ans.mtx -s $1],0,[PASS
 ])
 ])
 
@@ -334,15 +332,15 @@ AT_CHECK($2 AT_PACKAGE_NAME[ --input=sym.mm --expected=sym-default-ans.mm -s $1]
 m4_define([MC_SOLVER_SYM_POSDEF_TESTS],[
 dnl SYMMETRIC tests
 dnl Note: numbers are big, so precision has to be reduced to get matches
-AT_CHECK($2 AT_PACKAGE_NAME[ --input=sym_posdef.mm --expected=sym_posdef-default-ans.mm --solver=$1 --precision=5e-12],0,[PASS
+AT_CHECK($2 AT_PACKAGE_NAME[ --input=sym_posdef.mtx --expected=sym_posdef-default-ans.mtx --solver=$1 --precision=5e-12],0,[PASS
 ])
-AT_CHECK($2 AT_PACKAGE_NAME[ --input=sym_posdef.mm --right-hand-side=rhs1.mm --expected=sym_posdef-rhs1-ans.mm --solver=$1 --precision=5e-11],0,[PASS
+AT_CHECK($2 AT_PACKAGE_NAME[ --input=sym_posdef.mtx --right-hand-side=rhs1.mtx --expected=sym_posdef-rhs1-ans.mtx --solver=$1 --precision=5e-11],0,[PASS
 ])
-AT_CHECK($2 AT_PACKAGE_NAME[ --input=sym_posdef.mm --expected=sym_posdef-default-ans.mm -s $1 --precision=5e-12],0,[PASS
+AT_CHECK($2 AT_PACKAGE_NAME[ --input=sym_posdef.mtx --expected=sym_posdef-default-ans.mtx -s $1 --precision=5e-12],0,[PASS
 ])
 dnl check for missing arguments
-AT_CHECK(AT_PACKAGE_NAME[ --input=sym_posdef.mm --expected=sym_posdef-default-ans.mm -s],64,,ignore)
-AT_CHECK(AT_PACKAGE_NAME[ --input=sym_posdef.mm --expected=sym_posdef-default-ans.mm --solver],64,,ignore)
+AT_CHECK(AT_PACKAGE_NAME[ --input=sym_posdef.mtx --expected=sym_posdef-default-ans.mtx -s],64,,ignore)
+AT_CHECK(AT_PACKAGE_NAME[ --input=sym_posdef.mtx --expected=sym_posdef-default-ans.mtx --solver],64,,ignore)
 ])
 
 
