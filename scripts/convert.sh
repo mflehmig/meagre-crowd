@@ -4,6 +4,9 @@
 # A python program is invoked to reorder the matrix to Matrix Market Format. The Matrix is saved in an
 # MTX file and the temporary files deleted.
 
+# For further information see README.md.
+
+
 # FUNCTIONS #
 
 # VARIABLES #
@@ -73,4 +76,6 @@ echo "writing MTX file"
 python convert.py
 
 # DELETE tmp files #
-rm -rf ./tmp
+#rm -rf ./tmp
+
+echo "Finished."
