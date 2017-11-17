@@ -1,18 +1,18 @@
 """
 Synopsis:
-    This script transforms a linear system, i.e., a matrix A and a right-hand 
-    side vector b, from HQP into Matrix Market format.
+    This script transforms a linear system Ax=b from HQP into Matrix Market format.
     
 Usage:
-    python hqp2mtx.py -b right-hand-side.txt -A matrixA.txt
+    python hqp2mtx.py -b right-hand-side.txt -A matrix.txt -x solution.txt
     
-        --> Output: right-hand-side.mtx and matrixA.mtx
+        --> Output: right-hand-side.mtx, matrix.mtx and solution.mtx
 
 
 Command Line Parameters:
     Mandatory:
         -A FILE        File (incl. path) containing the matrix A from HQP.
         -b FILE        File (incl. path) containing the right hand side from HQP.
+        -x FILE        File (incl. path) containing the solution from HQP.
 
 Author:
     martin.schroschk@tu-dresden
@@ -99,33 +99,32 @@ def write_A(file, A):
         column=A.col[i]+1
         file_object.write(str(row) + " " + str(column) + " " + str(value) + "\n")
 
-    return mtx_file
 
-def read_b(file):
+def read_vec(file):
     """
-    Read right-hand side vector b from file and write the values into the list b.
+    Read a vector (,e.g., b and x) from file and write the values into the list vec.
 
-    :param file: The file (incl. path) to the right-hand side vector file.
-    :return: List b containg the values of the right hand side.
+    :param file: The file (incl. path) to the vector file.
+    :return: List vec containg the values of vector.
     """ 
     file_object=open(file, "r")
-    b=[]
+    vec=[]
     for line in file_object:
         if not line.startswith('#'):
             floats = [float(x) for x in line.split()]
-            b = b + floats
+            vec = vec + floats
     file_object.close()
 
-    return b
+    return vec
 
 
-def write_b(file, b):
+def write_vec(file, vec):
     """
-    Write the matrix A in Matrix Market format to file. If the original file is
-    A.txt than we create the file A.mtx.
+    Write a vector in Matrix Market format to file. If the original file is vec.txt
+    than we create the file vec.mtx.
 
-    :param file: The file (incl. path) to the original matrix A file.
-    :param A: Matrix A in coordinate format.
+    :param file: The file (incl. path) to the original vector file.
+    :param vec: Vector in coordinate format.
     :return: Name of MTX file.
     """
 
@@ -140,15 +139,13 @@ def write_b(file, b):
     ## file_object.write("")
     file_object.write("%-------------------------------------------------------------------------------\n")
     
-    num_elems = len(b)
+    num_elems = len(vec)
     file_object.write("{} {} {}\n".format(num_elems, '1', num_elems))
     cnt = 1
-    for item in b:
+    for item in vec:
         #file_object.write("%s 1 %s\n" % (cnt item))
         file_object.write("{} {} {}\n".format(cnt, '1', item))
         cnt += 1
-
-    return mtx_file
 
 
 def create_argument_parser():
@@ -159,6 +156,8 @@ def create_argument_parser():
                         help='Matrix A from HQP.')
     parser.add_argument('-b', metavar='FILE', type=str, required=False,
                         help='Right-hand side b from HQP.')
+    parser.add_argument('-x', metavar='FILE', type=str, required=False,
+                        help='Solution of linear system.')
 
     return parser
 
@@ -167,25 +166,32 @@ def main():
     # Parse command line arguments
     parser = create_argument_parser()
     args = parser.parse_args()  # will raise an error if the arguments are invalid and terminate the
-    if not (args.A or args.b):
-        parser.error('No action requested.')
+#     if not (args.A or args.b or args.x):
+#         parser.error('No action requested.')
     
     try:
         if args.A:
             file_A = os.path.abspath(args.A)
-            print("Convert matrix A from HQP-CSR format into Matrix Market format ...\n")
+            print("  Convert matrix A from HQP-CSR format into Matrix Market format ...")
             A = read_A(file_A);
             # convert CSR to COO
             A = A.tocoo()
-            mtx_file = write_A(file_A, A);
-            print("Matrix A in Matrix Market format:", mtx_file)
+            write_A(file_A, A);
+            print("  Done.")
 
         if args.b:
             file_b = os.path.abspath(args.b)
-            print("Convert right-hand side b from HQP format into Matrix Market format ...\n")
-            b = read_b(file_b);
-            mtx_file = write_b(file_b, b);
-            print("Right-hand side vector b in Matrix Market format:", mtx_file)
+            print("\n  Convert right-hand side b from HQP format into Matrix Market format ...")
+            b = read_vec(file_b);
+            write_vec(file_b, b);
+            print("  Done.")
+
+        if args.x:
+            file_x = os.path.abspath(args.x)
+            print("\n  Convert solution x from HQP format into Matrix Market format ...")
+            x = read_vec(file_x);
+            write_vec(file_x, x);
+            print("  Done.")  
 
         print("Finished.\n")
     except:
