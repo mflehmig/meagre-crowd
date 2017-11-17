@@ -166,8 +166,8 @@ def main():
     # Parse command line arguments
     parser = create_argument_parser()
     args = parser.parse_args()  # will raise an error if the arguments are invalid and terminate the
-#     if not (args.A or args.b or args.x):
-#         parser.error('No action requested.')
+    if not (args.A or args.b or args.x):
+        parser.error('No action requested.')
     
     try:
         if args.A:
