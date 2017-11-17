@@ -19,9 +19,10 @@ Author:
     nora_lynn.marcus@tu-dresden.de
 """
 
-import argparse
 import sys
+import os
 import re
+import argparse
 from scipy import sparse
 
 
@@ -98,6 +99,7 @@ def write_A(file, A):
         column=A.col[i]+1
         file_object.write(str(row) + " " + str(column) + " " + str(value) + "\n")
 
+    return mtx_file
 
 def read_b(file):
     """
@@ -146,6 +148,8 @@ def write_b(file, b):
         file_object.write("{} {} {}\n".format(cnt, '1', item))
         cnt += 1
 
+    return mtx_file
+
 
 def create_argument_parser():
     """
@@ -168,17 +172,19 @@ def main():
     
     try:
         if args.A:
+            file_A = os.path.abspath(args.A)
             print("Convert matrix A from HQP-CSR format into Matrix Market format ...\n")
-            A = read_A(args.A);
+            A = read_A(file_A);
             # convert CSR to COO
             A = A.tocoo()
-            mtx_file = write_A(args.A, A);
+            mtx_file = write_A(file_A, A);
             print("Matrix A in Matrix Market format:", mtx_file)
 
         if args.b:
+            file_b = os.path.abspath(args.b)
             print("Convert right-hand side b from HQP format into Matrix Market format ...\n")
-            b = read_b(args.b);
-            mtx_file = write_b(args.b, b);
+            b = read_b(file_b);
+            mtx_file = write_b(file_b, b);
             print("Right-hand side vector b in Matrix Market format:", mtx_file)
 
         print("Finished.\n")
