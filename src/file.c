@@ -414,14 +414,13 @@ static inline int is_eol(const char c);
 static inline int readmm_header(FILE* f, int* object, int* format, int* datatype, int* symmetry, int* rows, int* cols,
                                 int* nz, char** comments)
 {
-
     assert(f != NULL);
 
     // valid field types
-    const char* header[] = { "%%matrixmarket", NULL };
-    const char* objects[] = { "matrix", NULL };
-    const char* formats[] = { "array", "coordinate", NULL };
-    const char* datatypes[] = { "real", "integer", "complex", "pattern", NULL };
+    const char* header[]     = { "%%matrixmarket", NULL };
+    const char* objects[]    = { "matrix", NULL };
+    const char* formats[]    = { "array", "coordinate", NULL };
+    const char* datatypes[]  = { "real", "integer", "complex", "pattern", NULL };
     const char* symmetries[] = { "general", "symmetric", "skew-symmetric", "hermitian", NULL };
 
     const int FIELDS = 5;
@@ -438,8 +437,7 @@ static inline int readmm_header(FILE* f, int* object, int* format, int* datatype
         return -1;  // error or EOF w/ no characters
 
     // initialize results
-    int i;
-    for (i = 0; i < FIELDS; i++) {
+    for (int i = 0; i < FIELDS; i++) {
         *(outputs[i]) = -1;
     }
     *rows = *cols = *nz = 0;
