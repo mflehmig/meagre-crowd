@@ -134,10 +134,10 @@ def write_vec(file, vec):
     # write MTX file
     ## write header
     file_object.write("%%MatrixMarket matrix coordinate real general\n")
-    file_object.write("%-------------------------------------------------------------------------------\n")
+    #file_object.write("%-------------------------------------------------------------------------------\n")
     ## add matrix information here (name, usage, creator, etc)
     ## file_object.write("")
-    file_object.write("%-------------------------------------------------------------------------------\n")
+    #file_object.write("%-------------------------------------------------------------------------------\n")
     
     num_elems = len(vec)
     file_object.write("{} {} {}\n".format(num_elems, '1', num_elems))
