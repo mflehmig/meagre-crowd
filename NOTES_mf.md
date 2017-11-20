@@ -20,7 +20,7 @@ The script get_dependencies.sh automaticaly downloads and builds the dependencie
 
     tar xvfz bebop_make.tar.gz
     tar xvfz bebop_util.tar.gz
-    tar xvfz bebop_sparse_matrix_converter.tar.gz
+    tar xvfz sparse_matrix_converter.tar.gz
 
 Adopt *bebop_make/Makefile.include.linux* to your needs/wishes/requirements, e.g., *CC = icc*.
 
@@ -29,6 +29,8 @@ Adopt *bebop_make/Makefile.include.linux* to your needs/wishes/requirements, e.g
     cd ..
     mkdir lib
     mkdir -p include/bebop/smc
+
+if this fails, add -pthread to the $LDFLAGS (don't ask why)
     cd sparse_matrix_converter/ && make && cd ../
 
     cp sparse_matrix_converter/include/bebop/smc/*.h include/bebop/scm/
