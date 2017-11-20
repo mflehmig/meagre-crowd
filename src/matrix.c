@@ -49,7 +49,7 @@ static int _qsort_coo_cmp_cols_rows(const void* a, const void* b);
 // TODO this is quick, dirty and cheap.. can be much improved and maybe avoid the two extra copies for SPEED
 static void _qsort_coo(matrix_t* m, int x)
 {
-  assert(m->format = SM_COO);
+  assert(m->format == SM_COO);
   assert(m->data_type == REAL_DOUBLE);
 
   struct _qsort_coo_data_double* data = malloc((m->nz) * sizeof(_qsort_coo_data_double));
@@ -350,6 +350,7 @@ int cmp_matrix(matrix_t* a, matrix_t* b)
   switch (a->format) {
     case INVALID:
       assert(0);  // shouldn't be able to get here (checked for above)
+      break;
     case DROW:
     case DCOL:
       iilen = jjlen = 0;
@@ -1096,11 +1097,11 @@ int convert_matrix(matrix_t* m, enum matrix_format_t f, enum matrix_base_t b)
 }
 
 // swap upper-to-lower triangular and vice-versa
-static inline void _symmetry_swap(matrix_t* m);
+//static inline void _symmetry_swap(matrix_t* m);
 static inline void _symmetry_swap(matrix_t* m)
 {
   assert(m->format == SM_COO);
-  assert(m->sym = SM_SYMMETRIC);
+  assert(m->sym == SM_SYMMETRIC);
   assert(m->location != MC_STORE_BOTH);
 
   // swap ii and jj (rows and column indices)
@@ -1123,7 +1124,7 @@ static inline int _symmetry_both(matrix_t* m);
 static inline int _symmetry_both(matrix_t* m)
 {
   assert(m->format == SM_COO);
-  assert(m->sym = SM_SYMMETRIC);
+  assert(m->sym == SM_SYMMETRIC);
   assert(m->location != MC_STORE_BOTH);
 
   const size_t dwidth = _data_width(m->data_type);
@@ -1210,7 +1211,7 @@ static inline int _realloc_arrays(matrix_t* m, size_t nz)
 
 // search for duplicate matrix entries
 // combine the duplicates by adding
-static inline void _coo_merge_duplicate_entries(matrix_t* m);
+// static inline void _coo_merge_duplicate_entries(matrix_t* m);
 static inline void _coo_merge_duplicate_entries(matrix_t* m)
 {
   assert(m->format == SM_COO);
@@ -1249,7 +1250,7 @@ static inline void _symmetry_lower(matrix_t* m)
   // remove redundant entries in the upper triangle
   const size_t dwidth = _data_width(m->data_type);
   size_t nz = 0;
-  for (unsigned  i = 0; i < m->nz; i++) {
+  for (unsigned i = 0; i < m->nz; i++) {
     if (m->ii[i] >= m->jj[i]) {  // if row is >= column (lower triangle), keep this entry
       if (i != nz) {  // don't need to copy if its staying at the current location
         memcpy(m->ii + nz, m->ii + i, sizeof(unsigned int));
