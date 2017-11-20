@@ -183,7 +183,6 @@ int main(int argc, char ** argv)
   matrix_t* expected = NULL;
   matrix_t* A = NULL;
   matrix_t* rhs = NULL;
-  unsigned int m = 0;  // rows
   if (args->mpi_rank == 0) {
     // we only load matrices for the zero-rank master process
     b = malloc_matrix();
@@ -204,7 +203,7 @@ int main(int argc, char ** argv)
       return 1;
     }
     assert(validate_matrix(A) == 0);
-    m = matrix_rows(A);
+    unsigned int m = matrix_rows(A); // rows
     // TODO load a rhs from the --input matrix file
 
     // allocate an sequentially numbered right-hand side of A.m rows
@@ -431,7 +430,7 @@ int main(int argc, char ** argv)
     if (args->timing_enabled == 1) {
       printf("status, solver, threads, rows, max. memory (MB),  total memory (MB), ");
       perftimer_printf_csv_header(timer, 2);
-      printf("%s, %s, %d, %zd, %lg, %lg, ", retval == 100 ? "FAIL" : "PASS", solver2str(args->solver), c_mpi, A->m,
+      printf("%s, %s, %d, %zu, %lg, %lg, ", retval == 100 ? "FAIL" : "PASS", solver2str(args->solver), c_mpi, A->m,
              usage.ru_maxrss / 1e3, mem_sum);
       perftimer_printf_csv_body(timer, 2);
     }
