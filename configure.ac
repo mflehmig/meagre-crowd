@@ -34,7 +34,7 @@ AC_CONFIG_HEADERS([src/config.h])
 AC_USE_SYSTEM_EXTENSIONS
 
 
-CFLAGS="-=c99 $CFLAGS"
+CFLAGS="-std=c99 $CFLAGS"
 
 # debugging
 
