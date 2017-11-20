@@ -118,7 +118,6 @@ if this fails, add -pthread to the $LDFLAGS (don't ask why)
   1 1 .72827 --> 1 1 0.72827
   1 1 -.72827 --> 1 1 -0.72827
 
-* Input files need to have extension *.mm. Just move input.mtx to input.mm
 
 ## Configuration and Installation
 

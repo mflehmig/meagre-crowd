@@ -82,7 +82,7 @@ For help indicating what the program can do, run
 To load a matrix 'A' to solve using the default solver, using 2 MPI
 processes, show some info on the matrix and time the solving of it:
 
-  mpirun -n 2 ./meagre-crowd -i tests/test.mm -v -t
+  mpirun -n 2 ./meagre-crowd -i tests/test.mtx -v -t
 
 Note that you probably also need to submit a job to a scheduler if
 you are on a larger multicore system. (bsub, qsub, sqsub?)
@@ -91,7 +91,7 @@ File types:
 
 Currently, meagre-crowd determines file type from extensions,
 it can only handle MatrixMarket format which it expects to have
-a .mm extension. Rutherford-Boeing and Harwell-Boeing would be
+a .mtx extension. Rutherford-Boeing and Harwell-Boeing would be
 .rb and .hb respectively.
 
 Matrix Sizes:

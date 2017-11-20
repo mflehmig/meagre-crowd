@@ -23,7 +23,7 @@
 #include "matrix.h"
 
 // load a matrix from file "n" into matrix A
-// returns 0: success, <0 failure
+// returns 0: success, <0: failure
 int load_matrix( char* n, matrix_t* A );
 
 // save a matrix into file "n" from matrix A

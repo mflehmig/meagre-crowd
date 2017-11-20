@@ -100,7 +100,7 @@ void solver_analyze_mumps( solver_state_t* s, matrix_t* A ) {
     // instead we're just going straight for the unsymmetric solver
     assert( A->sym == SM_UNSYMMETRIC );
     assert( A->format == SM_COO );
-    assert( A->base = FIRST_INDEX_ONE );
+    assert( A->base == FIRST_INDEX_ONE );
 
     assert( A->data_type == REAL_DOUBLE ); // don't handle complex... yet TODO
     assert( A->m == A->n ); // square matrices only?
