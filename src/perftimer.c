@@ -127,7 +127,7 @@ int perftimer_inc(perftimer_t* h, char const* const s, const size_t n)
 
 // utility function: calculate difference between times, returns in seconds
 // t2 is assumed to be later than t1
-static inline double _calc_perftimer_diff(perftimer_tic_t const* const t1, perftimer_tic_t const* const t2);
+// static inline double _calc_perftimer_diff(perftimer_tic_t const* const t1, perftimer_tic_t const* const t2);
 static inline double _calc_perftimer_diff(perftimer_tic_t const* const t1, perftimer_tic_t const* const t2)
 {
   if ((t1 == NULL) || (t2 == NULL))
@@ -168,7 +168,7 @@ size_t perftimer_printlen(perftimer_t const * const h, const unsigned int d)
 }
 
 // find the longest set of links in the structure
-static unsigned int _max_links(perftimer_t const * h);
+//static unsigned int _max_links(perftimer_t const * h);
 static unsigned int _max_links(perftimer_t const * h)
 {
   unsigned int m = 0;
@@ -251,7 +251,7 @@ int perftimer_snprintf(perftimer_t const * const h, char* s, const size_t n, con
       strncat(s, ptr->desc, n - 1);
       if (t[i] > 0.0) {
         if (r[i] > 1)
-          snprintf(tmp, nw, ":\t%0.3fms (av. %0.3fms in %d rounds)\n", t[i] * 1e3, t[i] / ((double) r[i]) * 1e3, r[i]);
+          snprintf(tmp, nw, ":\t%0.3fms (av. %0.3fms in %ud rounds)\n", t[i] * 1e3, t[i] / ((double) r[i]) * 1e3, r[i]);
         else
           snprintf(tmp, nw, ":\t%0.3fms\n", t[i] * 1e3);
       }
@@ -267,7 +267,7 @@ int perftimer_snprintf(perftimer_t const * const h, char* s, const size_t n, con
   strncat(s, tmp, n - 1);
   unsigned int rnds = perftimer_rounds(h);  // rounds
   if (rnds > 1) {
-    snprintf(tmp, nw, " (av. %0.3fms in %d rounds)", perftimer_wall_av(h) * 1e3, rnds);
+    snprintf(tmp, nw, " (av. %0.3fms in %ud rounds)", perftimer_wall_av(h) * 1e3, rnds);
     strncat(s, tmp, n - 1);
   }
   // make the string safe: zero terminate it
@@ -398,7 +398,7 @@ int perftimer_snprintf_csv_body(perftimer_t const * const h, char* s, const size
   strncat(s, tmp, n - 1);
   unsigned int rnds = perftimer_rounds(h);  // rounds
   if (rnds > 1) {
-    snprintf(tmp, nw, ", %d", rnds);
+    snprintf(tmp, nw, ", %ud", rnds);
     strncat(s, tmp, n - 1);
   }
   // make the string safe: zero terminate it
