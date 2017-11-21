@@ -55,9 +55,10 @@ char *argv[];
   //save_sparse_matrix ("out-test.rb2mm", A, MATRIX_MARKET); // TODO segfault
   //save_sparse_matrix ("out-test.rb2hb", A, HARWELL_BOEING); // TODO broken output (all zeros)
   destroy_sparse_matrix( A );
+ 
 
   printf( "matrix market\n" );
-  A = load_sparse_matrix( MATRIX_MARKET, "unsym.mm" );
+  A = load_sparse_matrix( MATRIX_MARKET, "unsym.mtx" );
   assert( A != NULL );
   save_sparse_matrix( "out-test.mm2mm", A, MATRIX_MARKET );
   save_sparse_matrix( "out-test.mm2hb", A, HARWELL_BOEING );
