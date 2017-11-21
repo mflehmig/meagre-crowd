@@ -204,7 +204,16 @@ AC_CONFIG_FILES([atlocal])
 AC_MSG_CHECKING(for beer in the fridge)
   AC_MSG_RESULT(all systems go)
 
-AC_OUTPUT
+
+AC_PATH_PROG(DOT, dot)
+if test ! -z "$DOT"; then
+  have_dot="yes"
+else
+  have_dot="no"
+fi
+AC_SUBST(have_dot)
+
+AC_OUTPUT(doc/Doxyfile)
 
 
 AC_MSG_RESULT([])
@@ -221,6 +230,7 @@ AC_MSG_RESULT([])
 AC_MSG_RESULT([Features --------------------------------------------])
 dnl AC_MSG_RESULT([    Fortran Interface: $enable_fortran])
 dnl AC_MSG_RESULT([MAT v7.3 file support: $mat73])
+AC_MSG_RESULT([                  DOT: $have_dot])
 AC_MSG_RESULT([])
 AC_MSG_RESULT([Packages --------------------------------------------])
 AC_MSG_RESULT([                MatIO: $have_matio])

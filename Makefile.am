@@ -28,6 +28,11 @@ meagre_crowd_SOURCES = src/meagre-crowd.c \
 # the tests
 BUILT_TESTS = tests/file tests/helloworld-mpi tests/unit-perftimer tests/unit-matrix
 
+#if HAVE_DOT
+doc::
+	cd doc; doxygen; cd ..
+#endif
+
 if HAVE_MUMPS
 meagre_crowd_SOURCES += src/solver_mumps.c
 BUILT_TESTS += tests/helloworld-mumps

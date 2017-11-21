@@ -19,24 +19,27 @@
 #ifndef _ARGS_H_
 #define _ARGS_H_
 
-#include "config.h"
 #include <argp.h>
+#include "config.h"
 #include "solvers.h"
 
-// command line options
-struct parse_args {
-  char* input;
-  char* output;
-  char* rhs;
-  char* expected;
-  double expected_precision;
-  unsigned int timing_enabled;
-  unsigned int verbosity;
-  unsigned int rep;
-  int mpi_rank; // id
-  int solver;
+/** \brief Structure holding the parsed command line arguments.
+ *
+ */
+struct parse_args
+{
+  char* input;                    ///< Input matrix A
+  char* output;                   ///< output solution vector x
+  char* rhs;                      ///< right-hand side b
+  char* expected;                 ///< Expected solution vector x to compare solution from meagre-crowd against
+  double expected_precision;      ///< Expected precision of solution x
+  unsigned int timing_enabled;    ///< Enable timing functionality
+  unsigned int verbosity;         ///< Verbosity
+  unsigned int rep;               ///< Number of reptitions to solve the system
+  int mpi_rank;                   ///< Set by meagre-crowd
+  int solver;                     ///< Solver to use
 };
 
-int parse_args( int argc, char ** argv, struct parse_args* args );
+int parse_args(int argc, char** argv, struct parse_args* args);
 
 #endif
