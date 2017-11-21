@@ -43,44 +43,6 @@
 #include "matrix.h"
 #include "solvers.h"
 
-// test result of matrix computations
-// returns: 1=match w/in precision, 0=non-matching
-// TODO refactor mv to matrix.h, operate on matrix_t objects
-// TODO cmp_matrix()
-//int results_match( matrix_t* expected_matrix, matrix_t* result_matrix, const double precision );
-int results_match(matrix_t* expected_matrix, matrix_t* result_matrix, const double precision)
-{
-  assert(expected_matrix != NULL);
-  assert(result_matrix != NULL);
-  assert(expected_matrix->format != INVALID);
-  assert(result_matrix->format != INVALID);
-  assert(expected_matrix->data_type == REAL_DOUBLE);
-  assert(result_matrix->data_type == REAL_DOUBLE);
-  assert(result_matrix->m == expected_matrix->m);
-  assert(result_matrix->n == expected_matrix->n);
-
-  printf("%30s: %g\n", "precision", precision);
-
-  int ret;
-  ret = convert_matrix(expected_matrix, DCOL, FIRST_INDEX_ZERO);
-  assert(ret == 0);
-  ret = convert_matrix(result_matrix, DCOL, FIRST_INDEX_ZERO);
-  assert(ret == 0);
-
-  const double* expected = expected_matrix->dd;
-  const double* result = result_matrix->dd;
-  for (unsigned int i = 0; i < result_matrix->m; i++) {
-    for (unsigned int j = 0; j < result_matrix->n; j++) {
-
-      const unsigned int n = j * result_matrix->m + i;
-      if ((result[n] < (expected[n] - precision)) || (result[n] > (expected[n] + precision))) {
-        printf("unexpected answer: expected(%d,%d)=%lg vs result=%lg\n", i, j, expected[n], result[n]);
-        return 0;
-      }
-    }
-  }
-  return 1;
-}
 
 //void mpi_sum(void* in, void* inout, int *len, MPI_Datatype *dptr);
 void mpi_sum(void* in, void* inout, int *len, MPI_Datatype *dptr)
@@ -93,11 +55,12 @@ void mpi_sum(void* in, void* inout, int *len, MPI_Datatype *dptr)
   }
 }
 
+
 int main(int argc, char ** argv)
 {
   int retval;
   const int false = 0;
-  const int extra_timing = 0;  // allow extra timing: initialization, matrix load, etc.
+  const int extra_timing = 0;  // allow extra timing: initialization, matrix loading, etc.
 
   // handle command-line arguments
   struct parse_args* args = calloc(1, sizeof(struct parse_args));
@@ -428,7 +391,7 @@ int main(int argc, char ** argv)
 
   if (args->mpi_rank == 0) {
     if (args->timing_enabled == 1) {
-      printf("status, solver, threads, rows, max. memory (MB),  total memory (MB), ");
+      printf("status, solver, threads, rows, max. memory (MB), total memory (MB), ");
       perftimer_printf_csv_header(timer, 2);
       printf("%s, %s, %d, %zu, %lg, %lg, ", retval == 100 ? "FAIL" : "PASS", solver2str(args->solver), c_mpi, A->m,
              usage.ru_maxrss / 1e3, mem_sum);

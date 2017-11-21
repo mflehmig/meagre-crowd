@@ -1475,3 +1475,37 @@ void printf_matrix(char const * const pre, matrix_t* m)
 
   free_matrix(c);
 }
+
+int results_match(matrix_t* expected_matrix, matrix_t* result_matrix, const double precision)
+{
+  assert(expected_matrix != NULL);
+  assert(result_matrix != NULL);
+  assert(expected_matrix->format != INVALID);
+  assert(result_matrix->format != INVALID);
+  assert(expected_matrix->data_type == REAL_DOUBLE);
+  assert(result_matrix->data_type == REAL_DOUBLE);
+  assert(result_matrix->m == expected_matrix->m);
+  assert(result_matrix->n == expected_matrix->n);
+
+  printf("%30s: %g\n", "precision", precision);
+
+  int ret;
+  ret = convert_matrix(expected_matrix, DCOL, FIRST_INDEX_ZERO);
+  assert(ret == 0);
+  ret = convert_matrix(result_matrix, DCOL, FIRST_INDEX_ZERO);
+  assert(ret == 0);
+
+  const double* expected = expected_matrix->dd;
+  const double* result = result_matrix->dd;
+  for (unsigned int i = 0; i < result_matrix->m; i++) {
+    for (unsigned int j = 0; j < result_matrix->n; j++) {
+
+      const unsigned int n = j * result_matrix->m + i;
+      if ((result[n] < (expected[n] - precision)) || (result[n] > (expected[n] + precision))) {
+        printf("unexpected answer: expected(%d,%d)=%lg vs result=%lg\n", i, j, expected[n], result[n]);
+        return 0;
+      }
+    }
+  }
+  return 1;
+}

@@ -128,4 +128,13 @@ void printf_matrix( char const *const pre, matrix_t* m );
 
 // from enum, returns width of ea. value in the matrix in bytes
 size_t _data_width( const enum matrix_data_type_t t );
+
+
+// test result of matrix computations
+// returns: 1=match w/in precision, 0=non-matching
+// TODO refactor mv to matrix.h, operate on matrix_t objects
+// TODO cmp_matrix()
+//int results_match( matrix_t* expected_matrix, matrix_t* result_matrix, const double precision );
+int results_match(matrix_t* expected_matrix, matrix_t* result_matrix, const double precision);
+
 #endif
