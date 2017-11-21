@@ -13,6 +13,7 @@ Command Line Parameters:
         -A FILE        File (incl. path) containing the matrix A from HQP.
         -b FILE        File (incl. path) containing the right hand side from HQP.
         -x FILE        File (incl. path) containing the solution from HQP.
+        --dir PATH     All ".txt" files in the provided directory (not recursive!).
 
 Author:
     martin.schroschk@tu-dresden
@@ -24,6 +25,8 @@ import os
 import re
 import argparse
 from scipy import sparse
+from lxml import _elementpath
+from pyanaconda.exception import list_addons_callback
 
 
 def read_A(file):
@@ -158,17 +161,75 @@ def create_argument_parser():
                         help='Right-hand side b from HQP.')
     parser.add_argument('-x', metavar='FILE', type=str, required=False,
                         help='Solution of linear system.')
+    parser.add_argument('--dir', metavar='PATH', type=str, required=False,
+                        help='Convert all .txt files in provided directory.')
 
     return parser
 
+
+def get_filenames(path):
+    """
+    Run over all files in the given directory. Files that end with "A.txt", "b.txt" or "x.txt" are saved to three
+    separate lists. Return the lists containg the matrix, right-hand and solution files.
+    """
+    abspath = os.path.abspath(path)
+    if not os.path.exists(abspath):
+        exit
+
+    list_A = []
+    list_b = []
+    list_x = []
+    # Do not search in subdirectories, i.e., do not work recursive
+    for root, dirs, files in os.walk(abspath):
+        for file in files:
+            if file.endswith("A.txt"):
+                list_A.append(os.path.join(abspath, file))
+            if file.endswith("b.txt"):
+                list_b.append(os.path.join(abspath, file))
+            if file.endswith("x.txt"):
+                list_x.append(os.path.join(abspath, file))
+
+    return (list_A, list_b, list_x)
 
 def main():
     # Parse command line arguments
     parser = create_argument_parser()
     args = parser.parse_args()  # will raise an error if the arguments are invalid and terminate the
-    if not (args.A or args.b or args.x):
+    if not (args.A or args.b or args.x or args.dir):
         parser.error('No action requested.')
     
+    if args.dir:
+        (list_A, list_b, list_x) = get_filenames(args.dir)
+
+        if list_A:
+            print("Convert matrix files: ")
+            for file in list_A:
+                #print("  Convert matrix A from HQP-CSR format into Matrix Market format ...")
+                print("  ", file)
+                A = read_A(file);
+                # convert CSR to COO
+                A = A.tocoo()
+                write_A(file, A);
+            print("Done.\n")
+        
+        if list_b:
+            print("Convert vector b files: ")
+            for file in list_b:
+                #print("  Convert matrix A from HQP-CSR format into Matrix Market format ...")
+                print("  ",  file)
+                b = read_vec(file);
+                write_vec(file, b);
+            print("Done.\n")
+        
+        if list_x:
+            print("Convert vector x files: ")
+            for file in list_x:
+                #print("  Convert matrix A from HQP-CSR format into Matrix Market format ...")
+                print("  ",  file)
+                x = read_vec(file);
+                write_vec(file, x);
+            print("Done.\n")
+
     try:
         if args.A:
             file_A = os.path.abspath(args.A)
