@@ -57,7 +57,7 @@ error_t parse_opt(int key, char *arg, struct argp_state *state)
       exit( EXIT_SUCCESS);
       break;  // available solvers
 
-      // solvers
+    // solvers
     case 's':
     {
       args->solver = lookup_solver_by_shortname(arg);
@@ -67,15 +67,20 @@ error_t parse_opt(int key, char *arg, struct argp_state *state)
       }
     }
       break;
-
+    // Repetitions of calculation
     case 'r':
     {
       int i = atoi(arg);
-      i = (i < 0) ? 0 : i;  // > 0
+      // If N from "repeat calculations N times" < 1, we print a warning and set it to 1.
+      if (0 >= i) {
+        printf("INFO: The given number of calculation repetitions is less or equal to 0. Set it to 1.\n");
+        i = 1;
+      }
+      //i = (i < 0) ? 0 : i;  // > 0
       args->rep = i;
     }
       break;
-      // file I/O
+    // file I/O
     case 'i':
       args->input = arg;
       {
@@ -87,7 +92,7 @@ error_t parse_opt(int key, char *arg, struct argp_state *state)
         fclose(f);
       }
       break;
-
+    // Right-hand side
     case 'b':
       args->rhs = arg;
       {
@@ -99,7 +104,7 @@ error_t parse_opt(int key, char *arg, struct argp_state *state)
         fclose(f);
       }
       break;
-
+    // Expectated solution
     case 'e':
       args->expected = arg;
       {  // TODO refactor this file test: _file_exists(char* file, exists, char* err);
@@ -111,7 +116,7 @@ error_t parse_opt(int key, char *arg, struct argp_state *state)
         fclose(f);
       }
       break;
-
+    // Precision
     case 'p':
     {
       int err = sscanf(arg, "%lf", &(args->expected_precision));  // convert string -> double
@@ -125,7 +130,7 @@ error_t parse_opt(int key, char *arg, struct argp_state *state)
       }
     }
       break;
-
+    // Output
     case 'o':
       args->output = arg;
       if (strncmp(args->output, "-", 2) != 0) {
@@ -172,18 +177,21 @@ Options:";
     // "long", 'l', "value", flags, "desc", groupid
     static const struct argp_option opt[] = { { "help", 'h', 0, 0, "Give this help list", -1 },
         //{0,      '?', 0, OPTION_ALIAS},
-        { "usage", -1, 0, 0, "Show usage information", -1 }, { "version", 'V', 0, 0, "Show version information", -1 }, {
-            "input", 'i', "FILE", 0, "Input matrix from FILE (A)", 10 }, { "right-hand-side", 'b', "FILE", 0,
-            "RHS matrix from FILE (b)", 11 },
-        { "expected-answer", 'e', "FILE", 0, "Expected matrix as a FILE (x)", 12 }, { "precision", 'p', "<float>", 0,
-            "Precision of comparison with expectation (a floating point number)", 12 }, { "output", 'o', "FILE", 0,
-            "Output matrix to FILE (x) ('-' is stdout)", 13 }, { "verbose", 'v', 0, 0, "Increase verbosity", 20 },
+        { "usage", -1, 0, 0, "Show usage information", -1 },
+        { "version", 'V', 0, 0, "Show version information", -1 },
+        { "input", 'i', "FILE", 0, "Input matrix from FILE (A)", 10 },
+        { "right-hand-side", 'b', "FILE", 0, "RHS matrix from FILE (b)", 11 },
+        { "expected-answer", 'e', "FILE", 0, "Expected matrix as a FILE (x)", 12 },
+        { "precision", 'p', "<float>", 0, "Precision of comparison with expectation (a floating point number)", 12 },
+        { "output", 'o', "FILE", 0, "Output matrix to FILE (x) ('-' is stdout)", 13 },
+        { "verbose", 'v', 0, 0, "Increase verbosity", 20 },
         // TODO add note to man page: -v, -vv, -vvv, etc for more detail
         // none: no output, -v: matrix info & any available stats (i.e. cond. number),
         // -vv: more detail(?), -vvv: max debug
-        { "timing", 't', 0, 0, "Show/increase timing information", 21 }, { "repeat", 'r', "N", 0,
-            "Repeat calculations N times", 6 }, { "solver", 's', "SOLVER", 0, "Select SOLVER", 5 }, { "list-solvers",
-            -2, 0, 0, "List available SOLVERs (-vv for more details)", 5 },
+        { "timing", 't', 0, 0, "Show/increase timing information", 21 },
+        { "repeat", 'r', "N", 0, "Repeat calculations N times", 6 },
+        { "solver", 's', "SOLVER", 0, "Select SOLVER", 5 },
+        { "list-solvers", -2, 0, 0, "List available SOLVERs (-vv for more details)", 5 },
         // TODO add note to man page: -t, -tt, -ttt for more detail
         // none: no output, -t: single-line (csv), -tt: chart, -ttt: greater detail
         { 0 }  // null termintated list
