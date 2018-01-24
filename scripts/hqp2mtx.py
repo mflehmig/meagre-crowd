@@ -153,8 +153,10 @@ def write_vec(file, vec):
 
 def create_argument_parser():
     """
+    Define command line arguments and provide help.
     """
-    parser = argparse.ArgumentParser(prog='hqp2mtx', description='Convert right-hand side b into Matrix Market format.')
+    parser = argparse.ArgumentParser(prog='hqp2mtx',
+                                     description='Convert linear system Ax=b from HQP-dump format (CSR) into Matrix Market format.')
     parser.add_argument('-A', metavar='FILE', type=str, required=False,
                         help='Matrix A from HQP.')
     parser.add_argument('-b', metavar='FILE', type=str, required=False,
