@@ -35,7 +35,7 @@ struct parse_args
   double expected_precision;      ///< Expected precision of solution x
   unsigned int timing_enabled;    ///< Enable timing functionality
   unsigned int verbosity;         ///< Verbosity
-  unsigned int rep;               ///< Number of reptitions to solve the system
+  unsigned int rep;               ///< Number of repetitions to solve the system
   int mpi_rank;                   ///< Set by meagre-crowd
   int solver;                     ///< Solver to use
 };
