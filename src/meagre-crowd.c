@@ -21,6 +21,10 @@
  * We solve the system A x = RHS with
  * A = diag(1 2) and RHS = [1 4]ˆT
  * Solution is [1 2]ˆT */
+
+
+#define TIMEON 1
+
 #include "config.h"
 
 #include <stdio.h>
@@ -32,6 +36,7 @@
 #include <float.h> // machine epsilon: LDBL_EPSILON, DBL_EPSILON, FLT_EPSILON
 
 #include <mpi.h>
+#include <omp.h>
 
 // for getrusage
 #include <sys/time.h>
@@ -42,31 +47,19 @@
 #include "file.h"
 #include "matrix.h"
 #include "solvers.h"
-
-
-//void mpi_sum(void* in, void* inout, int *len, MPI_Datatype *dptr);
-void mpi_sum(void* in, void* inout, int *len, MPI_Datatype *dptr)
-{
-  assert(*dptr == MPI_DOUBLE);
-  double* const din = in;
-  double* const dinout = inout;
-  for (int i = 0; i < *len; i++) {
-    dinout[i] += din[i];
-  }
-}
+#include "util.h"
 
 
 int main(int argc, char ** argv)
 {
   int retval;
-  const int false = 0;
   const int extra_timing = 0;  // allow extra timing: initialization, matrix loading, etc.
 
   // handle command-line arguments
   struct parse_args* args = calloc(1, sizeof(struct parse_args));
   // TODO should default to appropriate epsilon for solver, may need to be *2 or some larger value given numerical instability? should print out epsilon of solution in verbose mode
   args->expected_precision = 5e-14;  // TODO was DBL_EPSILON=1.11e-16 but not stored with enough digits? // default to machine epsilon for 'double'
-//  args->expected_precision = FLT_EPSILON*2;
+  // args->expected_precision = FLT_EPSILON*2;
 
   assert(args != NULL);  // calloc failure
   if ((retval = parse_args(argc, argv, args)) != EXIT_SUCCESS) {
@@ -87,32 +80,21 @@ int main(int argc, char ** argv)
   const int requires_mpi = solver_requires_mpi(args->solver);
   const int uses_omp = solver_uses_omp(args->solver);
   const int requires_omp = solver_requires_omp(args->solver);
-  int c_mpi;
-  {
-    const char* mpi_world_size = getenv("OMPI_COMM_WORLD_SIZE");
-    if (mpi_world_size == NULL) {  // no env value configured
-      c_mpi = 0;
-      // printf( "no OMPI_COMM_WORLD_SIZE\n" );
-    }
-    else {  // works #ifdef OPEN_MPI -- we're using openMPI rather than lam or mpich...
-      int ret = sscanf(mpi_world_size, "%d", &c_mpi);
-      assert(ret == 1);
-      // printf( "OMPI_COMM_WORLD_SIZE=%d\n", c_mpi );
-    }
-  }
-  int c_omp;
-  {
-    const char* omp_threads = getenv("OMP_NUM_THREADS");
-    if (omp_threads == NULL) {  // no env value configured
-      c_omp = 0;
-      // printf( "no OMP_NUM_THREADS\n" );
-    }
-    else {  // works #ifdef OPEN_MP -- we're using openMP
-      int ret = sscanf(omp_threads, "%d", &c_omp);
-      assert(ret == 1);
-      // printf( "OMP_NUM_THREADS=%d\n", c_omp );
-    }
-  }
+  int c_mpi = get_mpi_num_procs();
+//  {
+//    const char* mpi_world_size = getenv("OMPI_COMM_WORLD_SIZE");
+//    if (mpi_world_size == NULL) {  // no env value configured
+//      c_mpi = 0;
+//      // printf( "no OMPI_COMM_WORLD_SIZE\n" );
+//    }
+//    else {  // works #ifdef OPEN_MPI -- we're using openMPI rather than lam or mpich...
+//      int ret = sscanf(mpi_world_size, "%d", &c_mpi);
+//      assert(ret == 1);
+//      // printf( "OMPI_COMM_WORLD_SIZE=%d\n", c_mpi );
+//    }
+//  }
+  int c_omp = get_omp_num_threads();
+
   const int is_mpi = (requires_mpi || (uses_mpi && (c_mpi != 0)));
   const int is_omp = (requires_omp || (uses_omp && (c_omp != 0)));
   const int is_single_threaded = (!is_mpi && !is_omp);
@@ -213,79 +195,8 @@ int main(int argc, char ** argv)
     }
 
     // verbose output
-    if (args->verbosity >= 1) {
-      assert(A != NULL);
-      int ierr = convert_matrix(A, SM_COO, FIRST_INDEX_ZERO);
-      assert(ierr == 0);
-      const char* sym, *location, *type;
-      switch (A->sym) {
-        case SM_UNSYMMETRIC:
-          sym = "unsymmetric";
-          break;
-        case SM_SYMMETRIC:
-          sym = "symmetric";
-          break;
-        case SM_SKEW_SYMMETRIC:
-          sym = "skew symmetric";
-          break;
-        case SM_HERMITIAN:
-          sym = "hermitian";
-          break;
-        default:
-          assert(false);  // fell through
-      }
-      if ((args->verbosity < 2) || (A->sym == SM_UNSYMMETRIC)) {
-        location = "";
-      }
-      else {
-        switch (A->location) {
-          case UPPER_TRIANGULAR:
-            location = " (upper)";
-            break;
-          case LOWER_TRIANGULAR:
-            location = " (lower)";
-            break;
-          case MC_STORE_BOTH:
-            location = "";
-            break;  // nothing
-          default:
-            assert(false);
-        }
-      }
-      switch (A->data_type) {
-        case REAL_DOUBLE:
-          type = "real";
-          break;
-        case REAL_SINGLE:
-          type = "real (single-precision)";
-          break;
-        case COMPLEX_DOUBLE:
-          type = "complex";
-          break;
-        case COMPLEX_SINGLE:
-          type = "complex (single-precision)";
-          break;
-        case SM_PATTERN:
-          type = "pattern";
-          break;
-        default:
-          assert(false);  // fell through
-      }
-//      printf("Ax=b: A is %zux%zu, nz=%zu, %s%s, %s, b is %zux%zu, nz=%zu\nsolved with %s on %d core%s, %d thread%s\n",
-//             A->m, A->n, A->nz, sym, location, type, b->m, b->n, b->nz, solver2str(args->solver), c_mpi,
-//             c_mpi == 1 ? "" : "s", c_omp, c_omp == 1 ? "" : "s");
-      printf("Ax=b: A is %zux%zu, nz=%zu, %s%s, %s\n", A->m, A->n, A->nz, sym, location, type);
-      printf("b is %zux%zu, nz=%zu\n", b->m, b->n, b->nz);
-      printf("solved with %s on %d core%s, %d thread%s\n", solver2str(args->solver), c_mpi, c_mpi == 1 ? "" : "s", c_omp, c_omp == 1 ? "" : "s");
-
-      if (args->verbosity >= 2) {
-        printf_matrix("  A", A);
-      }
-
-      if (args->verbosity >= 2) {  // show the rhs matrix
-        printf_matrix("  b", b);
-      }
-    }
+    if (args->verbosity >= 1)
+      print_verbose_output(args, A, b, expected, c_mpi, c_omp);
 
     if (extra_timing && args->rep == 0)
       perftimer_adjust_depth(timer, -1);
@@ -294,15 +205,38 @@ int main(int argc, char ** argv)
 
   solver_state_t* state = solver_init(args->solver, args->verbosity, args->mpi_rank, timer);  //okay
 
-  unsigned int r = 0;
-  do {
-    if (r != 0)
-      perftimer_restart(&timer);
+  // MS: Since I don't understand how this timer works, and I am currently only interested in "time to solution" for
+  // every solve call within this loop, I refactored it to a for loop (see below).
+//    unsigned int r = 0;
+//    do {
+//      if (r != 0)
+//        perftimer_restart(&timer);
+//
+//  #if TIMEON
+//      long long start = current_timestamp();
+//  #endif
+//      solver_solve(state, A, b, rhs);  // TODO rhs -> x
+//  #if TIMEON
+//      long long finish = current_timestamp();
+//      printf("Iteration %d\t time %lld\n", r, (finish-start));
+//  #endif
+//
+//      r++;
+//    }
+//    while (r < args->rep);
 
+  printf("\nStart solving Ax=b %d time(s) ...\n", args->rep);
+  for (int i = 1; i <= args->rep; ++i) {
+#if TIMEON
+    long long start = current_timestamp();
+#endif
     solver_solve(state, A, b, rhs);  // TODO rhs -> x
-    r++;
+#if TIMEON
+    long long finish = current_timestamp();
+    printf("Iteration %d\t time %lld\n", i, (finish-start));
+#endif
   }
-  while (r < args->rep);
+  printf("Done.\n");
 
   if (extra_timing && args->rep == 0) {
     perftimer_inc(timer, "clean up", -1);
@@ -325,14 +259,15 @@ int main(int argc, char ** argv)
 
   // test result?
   if ((args->mpi_rank == 0) && (expected->format != INVALID)) {
+    printf("\nCheck result against expected result...\n");
     perftimer_inc(timer, "test", -1);
     if (results_match(expected, rhs, args->expected_precision)) {
       retval = 0;
-      printf("PASS\n");
+      printf("  PASS.\n");
     }
     else {
       retval = 100;
-      printf("FAIL\n");
+      printf("  FAIL.\n");
     }
   }
 

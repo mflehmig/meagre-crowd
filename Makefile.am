@@ -23,7 +23,7 @@ AUTOMAKE_OPTIONS = gnu
 # the actual program to be installed at the end
 bin_PROGRAMS = meagre-crowd
 meagre_crowd_SOURCES = src/meagre-crowd.c \
-    src/perftimer.c src/matrix.c src/matrix_share.c src/args.c src/file.c src/solvers.c
+    src/perftimer.c src/matrix.c src/matrix_share.c src/args.c src/file.c src/solvers.c src/util.c
 
 # the tests
 BUILT_TESTS = tests/file tests/helloworld-mpi tests/unit-perftimer tests/unit-matrix
