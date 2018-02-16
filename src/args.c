@@ -28,7 +28,10 @@
 const char* argp_program_version = PACKAGE_STRING;
 const char* argp_program_bug_address = PACKAGE_BUGREPORT;
 
-//error_t parse_opt(int key, char *arg, struct argp_state *state);
+/** \brief Parse command line options.
+ *
+ * Set repetitions to 1 by default.
+ */
 error_t parse_opt(int key, char *arg, struct argp_state *state)
 {
   struct parse_args *args = state->input;
@@ -104,7 +107,7 @@ error_t parse_opt(int key, char *arg, struct argp_state *state)
         fclose(f);
       }
       break;
-    // Expectated solution
+    // Expected solution
     case 'e':
       args->expected = arg;
       {  // TODO refactor this file test: _file_exists(char* file, exists, char* err);
@@ -146,6 +149,7 @@ error_t parse_opt(int key, char *arg, struct argp_state *state)
     default:
       return ARGP_ERR_UNKNOWN;
   }
+
   return 0;
 }
 
@@ -206,6 +210,11 @@ Options:";
     }
     // error_t argp_parse (argp*, argc, **argv, unsigned flags, int *arg_index, void *input)
     argp_parse(&p, argc, argv, ARGP_NO_HELP, 0, args);
+  }
+
+  if (args->rep == 0) {
+    printf("INFO: Number of calculation repetitions not specified. Set it to 1 by default.\n");
+    args->rep = 1;
   }
 
   return EXIT_SUCCESS;
