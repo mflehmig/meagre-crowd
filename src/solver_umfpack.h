@@ -28,5 +28,6 @@ void solver_analyze_umfpack( solver_state_t* s, matrix_t* A );
 void solver_factorize_umfpack( solver_state_t* s, matrix_t* A );
 void solver_evaluate_umfpack( solver_state_t* s, matrix_t* b, matrix_t* x );
 void solver_finalize_umfpack( solver_state_t* s );
+double get_ordering_umfpack();
 
 #endif
