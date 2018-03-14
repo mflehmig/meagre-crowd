@@ -16,10 +16,12 @@
  *     You should have received a copy of the GNU General Public License
  *     along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
+
 #include "solver_superlu_dist.h"
 #include "solvers.h"
 #include "matrix.h"
 #include "matrix_share.h"
+#include "util.h"
 #include <superlu_ddefs.h>
 
 #include <stdlib.h> // malloc, free
@@ -49,9 +51,13 @@ void solver_init_superlu_dist( solver_state_t* s ) {
 
   // set default options
   set_default_options_dist(&(p->options));
+  // Get ordering from environment variable ORDERING
+  p->options.ColPerm = getSuperLUOrdering();
   if((s->mpi_rank == 0) && (s->verbosity >= 3)) {
     p->options.PrintStat = YES;
     print_options_dist(&(p->options));
+    print_sp_ienv_dist(&(p->options));
+    printf("ISPEC for column permutation): %d\n", p->options.ColPerm);
   }
   else {
     p->options.PrintStat = NO;
@@ -156,6 +162,17 @@ void solver_evaluate_superlu_dist( solver_state_t* s, matrix_t* b, matrix_t* x )
   pdgssvx_ABglobal(&(p->options), &(p->A), &(p->scale_permute), bb, ldb, nrhs, &(p->grid),
                    &(p->lu), berr, &stat, &info);
 
+  // Compare info with A->ncol which is equal to b->nrow. Only master prints this information.
+  // TODO If info != 0 the solver failed. Thus return error code and do not compare results.
+  if(!s->mpi_rank) {
+    if (info == 0)
+      printf("pdgssvx_ABglobal() returns info %d which means FINE\n", info);
+    if (info > 0 && info <= b->m)
+      printf("pdgssvx_ABglobal() returns info %d which means U(%d,%d) is exactly zero\n", info, info, info);
+    if (info > 0 && info > b->m)
+      printf("pdgssvx_ABglobal() returns info %d which means memory allocation failed\n", info);
+  }
+
   // TODO calculate inf_norm
 
   // print statistics
@@ -166,7 +183,7 @@ void solver_evaluate_superlu_dist( solver_state_t* s, matrix_t* b, matrix_t* x )
   ScalePermstructFree(&(p->scale_permute));
   Destroy_LU(p->A.nrow, &(p->grid), &(p->lu));
 
-  // copy the anser into x
+  // copy the answer into x
   if(s->mpi_rank == 0) {
     clear_matrix(x);
     x->format = DCOL;
@@ -204,3 +221,60 @@ void solver_finalize_superlu_dist( solver_state_t* s ) {
   free( p );
   s->specific = NULL;
 }
+
+colperm_t getSuperLUOrdering()
+{
+  colperm_t ret = NATURAL;  // Default value.
+  printf("SuperLU Ordering: ");
+  const char* env_p = getenv("ORDERING");
+  // if(const char* env_p = getenv("ORDERING")) {
+  if (env_p != NULL)
+  {
+    // std::string env(env_p);
+    //if (env.compare("NATURAL") == 0) {
+    if (strcmp(env_p, "NATURAL") == 0)
+    {
+      printf("NATURAL\n");
+      return NATURAL;
+    }
+    if (strcmp(env_p, "MMD_ATA") == 0)
+    {
+      printf("MMD_ATA\n");
+      return MMD_ATA;
+    }
+    if (strcmp(env_p, "MMD_AT_PLUS_A") == 0)
+    {
+      printf("MMD_AT_PLUS_A\n");
+      return MMD_AT_PLUS_A;
+    }
+    if (strcmp(env_p, "COLAMD") == 0)
+    {
+      printf("COLAMD\n");
+      return COLAMD;
+    }
+    if (strcmp(env_p, "METIS_AT_PLUS_A") == 0)
+    {
+      printf("METIS_AT_PLUS_A\n");
+      return METIS_AT_PLUS_A;
+    }
+    if (strcmp(env_p, "PARMETIS") == 0)
+    {
+      printf("PARMETIS\n");
+      return PARMETIS;
+    }
+    // ZOLTAN is only defined in SuperLU, not in SuperLU_MT. But since the user
+    // guide does not hold any information about ZOLTAN, we do not use it.
+//    if (strcmp(env_p,"ZOLTAN") == 0) {
+//      //printf( "ZOLTAN\n";
+//      m_warning(E_NULL, "Hqp_IpMatrix::getPermcSpec ZOLTAN is not enabled. "
+//                        "Set to COLAMD.");
+//    } else if (env.compare("MY_PERMC") == 0) {
+//      //printf( "MY_PERMC\n";
+//      ret = MY_PERMC;
+//    }
+    printf("Info: Not a valid Ordering. Use COLAMD.\n");
+  }
+  printf("NATURAL\n");
+  return ret;
+}
+

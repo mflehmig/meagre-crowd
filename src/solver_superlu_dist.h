@@ -22,7 +22,7 @@
 #include "config.h"
 #include "solvers.h"
 #include "matrix.h"
-
+#include <superlu_ddefs.h>
 //const char* solver_version_superlu_dist();
 void solver_init_superlu_dist( solver_state_t* s );
 void solver_analyze_superlu_dist( solver_state_t* s, matrix_t* A );
@@ -30,5 +30,14 @@ void solver_factorize_superlu_dist( solver_state_t* s, matrix_t* A );
 void solver_evaluate_superlu_dist( solver_state_t* s, matrix_t* b, matrix_t* x );
 // TODO void solver_refine_superlu_dist( solver_state_t* s, matrix_t* A, matrix_t* b, matrix_t* x );
 void solver_finalize_superlu_dist( solver_state_t* s );
+/**
+ * \brief Return column permutation specification for SuperLU_DIST.
+ *
+ * The user can specify the column permutation to use via environment variable
+ * ORDERING, e.g., ORDERING=NATURAL. Thus, we can test the  different options
+ * without recompiling ;-)
+ *
+ */
+colperm_t getSuperLUOrdering();
 
 #endif
