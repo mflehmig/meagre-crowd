@@ -1487,7 +1487,7 @@ int results_match(matrix_t* expected_matrix, matrix_t* result_matrix, const doub
   assert(result_matrix->m == expected_matrix->m);
   assert(result_matrix->n == expected_matrix->n);
 
-  printf("%30s: %g\n", "precision", precision);
+  //printf("%30s: %g\n", "precision", precision);
 
   int ret;
   ret = convert_matrix(expected_matrix, DCOL, FIRST_INDEX_ZERO);
