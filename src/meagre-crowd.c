@@ -81,18 +81,18 @@ int main(int argc, char ** argv)
   const int uses_omp = solver_uses_omp(args->solver);
   const int requires_omp = solver_requires_omp(args->solver);
   int c_mpi = get_mpi_num_procs();
-//  {
-//    const char* mpi_world_size = getenv("OMPI_COMM_WORLD_SIZE");
-//    if (mpi_world_size == NULL) {  // no env value configured
-//      c_mpi = 0;
-//      // printf( "no OMPI_COMM_WORLD_SIZE\n" );
-//    }
-//    else {  // works #ifdef OPEN_MPI -- we're using openMPI rather than lam or mpich...
-//      int ret = sscanf(mpi_world_size, "%d", &c_mpi);
-//      assert(ret == 1);
-//      // printf( "OMPI_COMM_WORLD_SIZE=%d\n", c_mpi );
-//    }
-//  }
+  //  {
+  //    const char* mpi_world_size = getenv("OMPI_COMM_WORLD_SIZE");
+  //    if (mpi_world_size == NULL) {  // no env value configured
+  //      c_mpi = 0;
+  //      // printf( "no OMPI_COMM_WORLD_SIZE\n" );
+  //    }
+  //    else {  // works #ifdef OPEN_MPI -- we're using openMPI rather than lam or mpich...
+  //      int ret = sscanf(mpi_world_size, "%d", &c_mpi);
+  //      assert(ret == 1);
+  //      // printf( "OMPI_COMM_WORLD_SIZE=%d\n", c_mpi );
+  //    }
+  //  }
   int c_omp = get_omp_num_threads();
 
   const int is_mpi = (requires_mpi || (uses_mpi && (c_mpi != 0)));
@@ -106,7 +106,7 @@ int main(int argc, char ** argv)
     int provided_threading;
     ierr = MPI_Init_thread(&argc, &argv, MPI_THREAD_MULTIPLE, &provided_threading);
     assert(ierr == 0);
-//    assert(provided_threading == MPI_THREAD_MULTIPLE);
+    // assert(provided_threading == MPI_THREAD_MULTIPLE);
     ierr = MPI_Comm_rank(MPI_COMM_WORLD, &(args->mpi_rank));
     assert(ierr == 0);
     ierr = MPI_Comm_size(MPI_COMM_WORLD, &c_mpi);
@@ -144,6 +144,7 @@ int main(int argc, char ** argv)
     if (extra_timing && args->rep == 0)
       perftimer_inc(timer, "load", -1);
 
+    // Load A
     if ((retval = load_matrix(args->input, A)) != 0) {
       return 1;
     }
@@ -151,6 +152,7 @@ int main(int argc, char ** argv)
     unsigned int m = matrix_rows(A); // rows
     // TODO load a rhs from the --input matrix file
 
+    // Load b if provided, else create "random" rhs.
     // allocate an sequentially numbered right-hand side of A.m rows
     // TODO warn if there is already a rhs loaded
     if (args->rhs != NULL) {
@@ -180,6 +182,7 @@ int main(int argc, char ** argv)
     }
     assert(validate_matrix(b) == 0);
 
+    // Load x (if provided)
     if (args->expected != NULL) {
       // TODO refactor: this is a cut and paste of the loader for 'b'
       if ((retval = load_matrix(args->expected, expected)) != 0) {
@@ -201,7 +204,8 @@ int main(int argc, char ** argv)
     if (extra_timing && args->rep == 0)
       perftimer_adjust_depth(timer, -1);
     //destroy_sparse_matrix (A); // TODO can't release it unless we're copying it...
-  }
+
+  } // MPI master
 
   solver_state_t* state = solver_init(args->solver, args->verbosity, args->mpi_rank, timer);  //okay
 
