@@ -32,3 +32,9 @@ tests/unit-perftimer
 tests/unit-matrix
 COPYING
 COPYING.LESSER
+
+# IDE Stuff
+*.project
+*.cproject
+*.settings
+*.pydevproject
