@@ -55,7 +55,7 @@ static void _qsort_coo(matrix_t* m, int x)
   struct _qsort_coo_data_double* data = malloc((m->nz) * sizeof(_qsort_coo_data_double));
   assert(data != NULL);
 
-  for (unsigned int i = 0; i < m->nz; i++) {
+  for (unsigned int i = 0; i < m->nz; i++) { // if this fails, make int signed
     (data[i]).ii = m->ii[i];
     (data[i]).jj = m->jj[i];
     (data[i]).dd = ((double*) m->dd)[i];
@@ -1097,12 +1097,20 @@ int convert_matrix(matrix_t* m, enum matrix_format_t f, enum matrix_base_t b)
 }
 
 // swap upper-to-lower triangular and vice-versa
+<<<<<<< HEAD
 //static inline void _symmetry_swap(matrix_t* m);
 static inline void _symmetry_swap(matrix_t* m)
 {
   assert(m->format == SM_COO);
   assert(m->sym == SM_SYMMETRIC);
   assert(m->location != MC_STORE_BOTH);
+=======
+static inline void _symmetry_swap( matrix_t* m );
+static inline void _symmetry_swap( matrix_t* m ) {
+  assert( m->format == SM_COO );
+  assert( m->sym == SM_SYMMETRIC );
+  assert( m->location != MC_STORE_BOTH );
+>>>>>>> boyle/master
 
   // swap ii and jj (rows and column indices)
   // an item at (1,2) is moved to (2,1) -- the other side of the triangle
@@ -1120,6 +1128,7 @@ static inline void _symmetry_swap(matrix_t* m)
 
 // duplicate data
 // returns non-zero on malloc failure
+<<<<<<< HEAD
 static inline int _symmetry_both(matrix_t* m);
 static inline int _symmetry_both(matrix_t* m)
 {
@@ -1128,6 +1137,15 @@ static inline int _symmetry_both(matrix_t* m)
   assert(m->location != MC_STORE_BOTH);
 
   const size_t dwidth = _data_width(m->data_type);
+=======
+static inline int _symmetry_both( matrix_t* m );
+static inline int _symmetry_both( matrix_t* m ) {
+  assert( m->format == SM_COO );
+  assert( m->sym == SM_SYMMETRIC );
+  assert( m->location != MC_STORE_BOTH );
+
+  const size_t dwidth = _data_width( m->data_type );
+>>>>>>> boyle/master
   const size_t nz_old = m->nz;
   if (_realloc_arrays(m, nz_old * 2) != 0)
     return -1;
