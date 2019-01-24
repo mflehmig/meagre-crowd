@@ -4,7 +4,7 @@ Compiling and Installing
 
 If checking out code from a repository, run
 
-  ./autogen
+bash autogen or ./autogen
 
 to regenerate the configure scripts. You will need m4 and the autoconf tools installed to
 regenerate these scripts. If these are not available then download the tar ball
