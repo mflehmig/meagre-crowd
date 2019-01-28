@@ -213,7 +213,8 @@ else
 fi
 AC_SUBST(have_dot)
 
-AC_OUTPUT(doc/Doxyfile)
+AC_CONFIG_FILES([doc/Doxyfile])
+AC_OUTPUT
 
 
 AC_MSG_RESULT([])

@@ -3,7 +3,7 @@
 # generate ChangeLog from git shortlog
 # default directory to put this stuff in is the local one
 lcl="."
-distdir=${1:-${lcl}}
+distdir=${1:-${lcl}} # 
 top_src_dir=${2:-${lcl}}
 echo "srcdir=${top_src_dir} distdir=${distdir}"
 # eat the two first options
@@ -18,31 +18,33 @@ shift
 #  there's no ChangeLog,
 #  the ChangeLog is short, or
 #  there's newer tags
+
 if ( [[ -d ${top_src_dir}/.git/refs/tags ]] && \
       ( [[ ! -f ${distdir}/ChangeLog ]] || \
         [[ $(wc -l ${distdir}/ChangeLog | cut -f 1 -d ' ' ) -lt 10 ]] || \
-        [[ ${top_src_dir}/.git/refs/tags -nt ${distdir}/ChangeLog ]] ) ); then
-  echo "rebuilding ChangeLog"
-  [[ -f ${distdir}/ChangeLog ]] && rm ${distdir}/ChangeLog
-  T=( $(git tag -l) )
-  for i in $(seq 1 $((${#T[@]}-1)) | tac); do
-    echo -ne "Release ${T[$i]}:                                          " >> ${distdir}/ChangeLog
-    date --date=- +'%b %d, %Y' --date="$(git show -s --format="%ci" ${T[$i]} | tail -1)" >> ${distdir}/ChangeLog
-    git shortlog -w79,6,9 ${T[$i-1]}..${T[$i]} | grep -v 'minor:' | grep -v 'WIP:' | grep -e '^ ' >> ${distdir}/ChangeLog
-    echo "" >> ${distdir}/ChangeLog
-  done
+        [[ ${top_src_dir}/.git/refs/tags -nt ${distdir}/ChangeLog ]] ) )
+    then
+        echo "rebuilding ChangeLog"
+        [[ -f ${distdir}/ChangeLog ]] && rm ${distdir}/ChangeLog
+        T=( $(git tag -l) )
+        for i in $(seq 1 $((${#T[@]}-1)) | tac); do
+            echo -ne "Release ${T[$i]}:                                          " >> ${distdir}/ChangeLog
+            date --date=- +'%b %d, %Y' --date="$(git show -s --format="%ci" ${T[$i]} | tail -1)" >> ${distdir}/ChangeLog
+            git shortlog -w79,6,9 ${T[$i-1]}..${T[$i]} | grep -v 'minor:' | grep -v 'WIP:' | grep -e '^ ' >> ${distdir}/ChangeLog
+            echo "" >> ${distdir}/ChangeLog
+        done
 else
-  echo "opting to NOT rebuild ChangeLog"
+    echo "opting to NOT rebuild ChangeLog"
 fi
 
 if [[ ! -f ${distdir}/COPYING ]]; then
-  echo "get GPLv3"
-  wget -q http://www.gnu.org/licenses/gpl-3.0.txt -O ${distdir}/COPYING
+    echo "get GPLv3"
+    wget -q http://www.gnu.org/licenses/gpl-3.0.txt -O ${distdir}/COPYING
 fi
 
 if [[ ! -f ${distdir}/COPYING.LESSER ]]; then
-  echo "get LGPLv3"
-  wget -q http://www.gnu.org/licenses/lgpl-3.0.txt -O ${distdir}/COPYING.LESSER
+    echo "get LGPLv3"
+    wget -q http://www.gnu.org/licenses/lgpl-3.0.txt -O ${distdir}/COPYING.LESSER
 fi
 
 echo "get macros"
