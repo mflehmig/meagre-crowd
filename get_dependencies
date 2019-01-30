@@ -1,16 +1,21 @@
 #! /bin/sh
 
-# select implementations
+# == CHANGE THESE VARIABLES ==
+# = Select implementations.
 MPI="openmpi2" # mpich2 or mpich1 or openmpi or local or skip
 BLAS="openblas" # netlib or atlas or local
 CBLAS="CombBLAS"
 LAPACK="lapack3" # netlib or local
 METIS="parmetis" # parmetis or metis -- metis is required by cholmod
 
+# = Add custom library search path. Common paths and those defined by the system are already included, so only add paths like /home/libraries/builds/MPI
+#customsearchpath="path1
+#  path2"
+
 #PARALLEL_MAKE_DISABLED="yes" # force make to use a single core for compiling
 
-# select versions
-# toolkits
+# = Select Versions to download.
+# Toolkits
 #MPICH2_MPI_VER="1.2.1p1"
 #MPICH1_MPI_VER="1.2.7p1"
 OPENMPI_VER="2.1.1-8"
@@ -21,7 +26,7 @@ LAPACK_VER="3.7.1-4ubuntu1"
 COMBBLAS_VER="16.2"
 # Note: no versionable downloads for netlib BLAS, ScaLAPACK
 
-# orderings
+# Orderings
 AMD_VER="2.2.1"
 CAMD_VER="5.1.2-2"
 CCOLAMD_VER="5.1.2-2" # required by CHOLMOD
@@ -32,7 +37,7 @@ METIS_VER="5.1.0.dfsg-5"
 SCOTCH_VER="6.0"
 CHOLMOD_VER="5.1.2-2" # can use Metis-4
 
-# solvers
+# Solvers
 # MUMPS_VER=4.9.2 # the solver, not the scripting language
 UMFPACK_VER="5.1.2-2"
 TAUCS_VER=2.2
@@ -41,16 +46,8 @@ COMBBLAS_VER="16.2"
 SUPERLU_DIST_VER="6.1.0"
 #PARDISO_VER=""
 
-# necessary functions
-function err() {
-  echo "ERROR: ${1} - ${2}"
-  exit 1
-}
-
-function info() {
-  echo "* $*"
-}
-
+# == FUNCTION DECLARATION == needed here
+# = This function displays a help text. If you want to add a target, start here.
 DEP_DIRS="mpi blas lapack blacs scalapack amd camd ccolamd colamd metis scotch cholmod mumps umfpack pardiso wsmp taucs superlu bebop matio superlu_dist cblas openblas"
 function help() {
   echo "$(basename $0) [options]"
@@ -60,12 +57,40 @@ function help() {
   echo "  distclean - clean + remove generated files too"
 }
 
+# == SET NEEDED PATHS ==
+# Setting some useful paths.
 S=${PWD}
 MACHINE=$(gcc -dumpmachine)
 INSTALL_BASE_DIR=${PWD}/${MACHINE}
 
+# Setting library search paths.
+libsearchpath=""
+for file in $( ls /etc/ld.so.conf.d ); do # non-POSIX lib paths should be in these files
+    file=/etc/ld.so.conf.d/$file
+    libsearchpath="${libsearchpath}
+    $(<$file)"
+done
+libsearchpath=$( echo "${libsearchpath}" | grep /  )
+commonpaths="/usr/local/lib
+/usr/local/lib64
+/usr/lib
+/usr/lib64
+/lib
+/lib64
+$customsearchpath" # these paths are proposed by POSIX
+for path in $commonpaths; do
+  if [ -f $path ]; then # only add them if they exist
+    libsearchpath="${libsearchpath}
+    $path" 
+  fi
+done
+libsearchpath="${libsearchpath}
+            ${INSTALL_BASE_DIR}" # concatenate
+
+# == DISPLAY THE HELP TEXT == if the script was invocated wrong
 [ $# -eq 0 ] && help && exit 2
 
+# == CHOOSE WHICH TARGETS TO BUILD ==
 while [ $# != 0 ]; do
   case $1 in
     "mpi") MPI_BUILD=1;;
@@ -123,16 +148,29 @@ if [[ -n $ALL ]]; then
   MATIO=1
 fi
 
-# dependencies
+# = build Cilk and CBLAS if TAUCS was chosen
 [[ -n $TAUCS ]] && CILK_REQUIRED=1 && CBLAS_REQUIRED=1
 
+# == FUNCTION DECLARATIONS ==
+# = This function prints errors in an nice format an exits. $1 - package, $2 - error message
+function err() {
+  echo "ERROR: ${1} - ${2}"
+  exit 1
+}
+
+# = This function prints information in a nice format. $: info message
+function info() {
+  echo "* $*"
+}
+
+
+# = This function converts a static library (.a) to a dynamically linked library (.so).
 # some notes on dynamic library tools:
 # ldd lib.so will show what libraries (and where they are) that a .so depends upon
 # ldd -u -r -d lib.so will check that all the necessary symbols can be found
 # gcc -shared *.so -Wl,-rpath,${IPATH} -o lib.so will add ${IPATH} as if LD_LIBRARY_PATH was set, so the .so can find its dependancies if they aren't installed in the standard locations
 # nm lib.so/a will show the symbols included in a library
 # readelf -a lib.so |grep RPATH will show what the rpath is set to
-
 
 # convert static library .a to dynamic lib .so
 # Note: compile requires -fPIC to be relocatable
@@ -152,6 +190,23 @@ function a2so() {
   rm -rf $F-d
 }
 
+# = This function looks in previously set search paths for a library ($1).
+function find_library() {
+  libfound_err=1
+  libname=$1
+  for path in $libsearchpath; do
+    path_="$path/lib${libname}.so*"
+    if [ -f $path_ ]; then 
+      libpath="$path"
+      libfound_err=0
+    fi   
+  done 
+  if [ "$libfound_err" -eq "1" ]; then
+    err $libname "shared library not found"
+  fi  
+}
+
+# = This function downloads and unpacks a package if it wasn't found in the directory. $1 - library name (without lib, so), $2 - source link
 # get_and_unpack <dest> <src_url>
 function get_and_unpack() {
   D=$1
@@ -165,10 +220,12 @@ function get_and_unpack() {
   info "  Extracting $F" && tar zxvf ${DL}/${F} -C ${D} &> /dev/null
 }
 
-# setup
+# == SETUP ==
+# = Set time + date.
 info "Started $(date)"
 TIC=$(date +%s)
 
+# = Set paths.
 mkdir -p ${INSTALL_BASE_DIR}/lib
 mkdir -p ${INSTALL_BASE_DIR}/include
 mkdir -p ${INSTALL_BASE_DIR}/bin
@@ -177,7 +234,7 @@ INSTALL_INC_DIR=${INSTALL_BASE_DIR}/include
 INSTALL_BIN_DIR=${INSTALL_BASE_DIR}/bin
 
 
-# determine parallel make capacity
+# = Determine parallel make capacity.
 if [[ -n ${PARALLEL_MAKE_DISABLED} ]]; then
   info "Parallel make disabled"
   MAKE="make"
@@ -188,7 +245,7 @@ else
   MAKE="make -j${NCPU_P1}"
 fi
 
-
+# === BUILD TOOLKITS ===
 # TODO ?? does whatever version of gcc support openmp
 # TODO ?? OMP_NUM_THREADS is passed in by mpirun/exec -- does sqsub get this right?
 
@@ -361,7 +418,8 @@ fi
 if [[ ( -f ${INSTALL_LIB_DIR}/libblas.so) || (-f ${INSTALL_LIB_DIR}/libopenblas.so) ]]; then
   BLAS_PATH=${INSTALL_LIB_DIR}
 else
-  BLAS_PATH="/usr/lib/${MACHINE}"
+  find_library blas
+  BLAS_PATH="libpath"
 fi
 if [[ (! -f ${BLAS_PATH}/libblas.so) || (! -f ${BLAS_PATH}/libopenblas.so) ]]; then
   err blas "can't find libblas.so or libopenblas.so at ${BLAS_PATH}"
@@ -399,8 +457,8 @@ if [[ -n $LAPACK_BUILD ]]; then
       LAPACK_LIB=${INSTALL_LIB_DIR}/liblapack.a
     ;;
     "local" )
-      info "Assuming local version of LAPACK"
-      LAPACK_LIB=/usr/lib/liblapack.a
+      find_library lapack
+      LAPACK_LIB=$libpath
     ;;
     *) err ${LAPACK} "bad lapack choice";;
   esac
@@ -408,7 +466,8 @@ fi
 if [[ -f ${INSTALL_LIB_DIR}/liblapack.so ]]; then
   LAPACK_PATH=${INSTALL_LIB_DIR}
 else
-  LAPACK_PATH="/usr/lib/${MACHINE}"
+  find_library lapack
+  LAPACK_PATH=libpath
 fi
 [[ ! -f ${LAPACK_PATH}/liblapack.so ]] && err lapack "can't find liblapack.so at ${LAPACK_PATH}"
 LAPACK_DLIB="-L${LAPACK_PATH} -llapack"
@@ -528,16 +587,18 @@ if [[ -n $SCALAPACK ]]; then
 fi
 SCALAPACK_PATH=${INSTALL_LIB_DIR}
 if [[ -f ${INSTALL_LIB_DIR}/libscalapack.so ]]; then
-  SCALAPACK_PATH=/usr/lib/${MACHINE}/openmpi/lib/
+  find_library scalapack
+  SCALAPACK_PATH=libpath
 fi
 [[ ! -f ${SCALAPACK_PATH}/libscalapack.so ]] && err scalapack "can't find libscalapack.so at ${SCALAPACK_PATH}"
 info "  using ${SCALAPACK_PATH}/libscalapack.so"
 SCALAPACK_DLIB="-L${SCALAPACK_PATH} -lscalapack"
 
 
-# orderings:
+# === ORDERINGS ===
 info "== orderings =="
 
+# = AMD
 if [[ -n $AMD ]]; then
   info "AMD"
   get_and_unpack amd http://www.cise.ufl.edu/research/sparse/amd/AMD-${AMD_VER}.tar.gz
@@ -573,6 +634,8 @@ CAMD_DLIB="-L${AMD_LIB} -lcamd"
 info "  using ${AMD_LIB}/libamd.so"
 info "  using ${AMD_LIB}/libcamd.so"
 
+# = CCOLAMD
+
 if [[ -n $CCOLAMD ]]; then
   info "CCOLAMD"
   get_and_unpack ccolamd http://www.cise.ufl.edu/research/sparse/ccolamd/CCOLAMD-${CCOLAMD_VER}.tar.gz
@@ -606,6 +669,8 @@ fi
 [[ ! -f ${INSTALL_LIB_DIR}/libcolamd.so ]] && err colamd "can't find libcolamd.so ${INSTALL_LIB_DIR}"
 COLAMD_DLIB="-L${INSTALL_LIB_DIR} -lcolamd"
 info "  using ${INSTALL_LIB_DIR}/libcolamd.so"
+
+# = METIS
 
 if [[ -n $METIS_BUILD ]]; then
   case ${METIS} in
@@ -652,6 +717,8 @@ METIS_DLIB="-L${METIS_PATH} -l${METIS}"
 [[ "$METIS" == "parmetis" ]] && METIS_DLIB="${METIS_DLIB} -lmetis ${MPI_DLIB}"
 info "  using ${METIS_PATH}/lib${METIS}.so"
 
+# = SCOTCH
+
 if [[ -n $SCOTCH ]]; then
   # Note: parallel make broken for esmumps releases
   info "pt-SCOTCH/SCOTCH"
@@ -688,7 +755,10 @@ info "  using ${INSTALL_LIB_DIR}/libptscotch.so"
 # TODO get AMF
 # Note: PORD is included in MUMPS
 
+# === BUILD SOLVERS ===
 info "== solvers =="
+
+# = CHOLMOD
 
 if [[ -n $CHOLMOD ]]; then
   info "CHOLMOD"
@@ -720,7 +790,7 @@ fi
 CHOLMOD_DLIB="-L${INSTALL_LIB_DIR} -lcholmod"
 info "  using ${INSTALL_LIB_DIR}/libcholmod.so"
 
-
+# = UMFPACK
 if [[ -n $UMFPACK ]]; then
   info "UMFPACK"
   rm -rf umfpack # doing this twice breaks things, so delete any old version before starting again
@@ -745,6 +815,7 @@ if [[ -n $UMFPACK ]]; then
   a2so ${INSTALL_LIB_DIR}/libumfpack.a ${CHOLMOD_DLIB} -lm
 fi
 
+# = MUMPS
 if [[ -n $MUMPS ]]; then
   # get mumps
   info "MUMPS"
@@ -793,6 +864,8 @@ if [[ -n $MUMPS ]]; then
   done
 fi
 
+# = PARDISO
+
 if [[ -n $PARDISO ]]; then
   PARDISO_VER=4.1.1
   info "Pardiso ${PARDISO_VER}"
@@ -811,6 +884,7 @@ if [[ -n $PARDISO ]]; then
   fi
 fi
 
+# = WSMP
 # tar or file
 WSMP_SRC=file
 if [[ -n $WSMP_BUILD ]]; then
@@ -849,6 +923,8 @@ if [[ -n $WSMP_BUILD ]]; then
     info "  installed libwsmp"
   fi
 fi
+
+# = TAUCS
 
 if [[ -n $TAUCS ]]; then
   info "TAUCS"
@@ -907,6 +983,7 @@ EOF
   cp ${S}/taucs/src/taucs*.h ${INSTALL_INC_DIR}/
 fi
 
+# = SUPERLU
 if [[ -n $SUPERLU ]]; then
   # get superlu
   info "SuperLU"
