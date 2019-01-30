@@ -1,5 +1,13 @@
 #! /bin/sh
 
+# This script downloads, unpacks and installs a number of targets. Meagre-crowd
+# depends on them, and the target depend on each other. See solvers_dependencies.csv
+# for a full list of a solver's dependencies.
+# Usage: Before invoking
+# bash get_dependencies <target1> <target2> ... <targetn>
+# adapt the variables below to your custom. 
+
+
 # == CHANGE THESE VARIABLES ==
 # = Select implementations.
 MPI="openmpi2" # mpich2 or mpich1 or openmpi or local or skip
@@ -87,22 +95,20 @@ done
 libsearchpath="${libsearchpath}
             ${INSTALL_BASE_DIR}" # concatenate
 
-# == DISPLAY THE HELP TEXT == if the script was invocated wrong
+# == DISPLAY THE HELP TEXT == if the script was invocated without options
 [ $# -eq 0 ] && help && exit 2
 
 # == CHOOSE WHICH TARGETS TO BUILD ==
+# Add a new target here.
 while [ $# != 0 ]; do
   case $1 in
     "mpi") MPI_BUILD=1;;
-    "cilk") CILK=1;;
     "blas") BLAS_BUILD=1;;
-    "openblas") OPENBLAS_BUILD=1;;
-    "cblas") CBLAS_BUILD=1;;
     "lapack") LAPACK_BUILD=1;;
     "blacs") BLACS=1;;
     "scalapack") SCALAPACK=1;;
     "amd") AMD=1;;
-    "camd") CAMD=1;;
+    "camd") AMD=1;; # is included in amd
     "ccolamd") CCOLAMD=1;;
     "colamd") COLAMD=1;;
     "metis") METIS_BUILD=1;;
@@ -116,6 +122,10 @@ while [ $# != 0 ]; do
     "superlu") SUPERLU=1;;
     "bebop") BEBOP=1;;
     "matio") MATIO=1;;
+    "superlu_dist") SUPERLU_DIST=1;;
+    "openblas") OPENBLAS_BUILD=1;;
+    "cblas") CBLAS_BUILD=1;;
+    "cilk") CILK=1;;
     "nopar") PARALLEL_MAKE_DISABLED=yes;;
     "clean") echo "cleaning..." && rm -rf ${DEP_DIRS} && exit 0;;
     "distclean") echo "cleaning..." && rm -rf ${DEP_DIRS} && rm -rf ${INSTALL_BASE_DIR} && exit 0;;
@@ -123,16 +133,15 @@ while [ $# != 0 ]; do
   esac
   shift;
 done
+# Add a new target here, too.
 if [[ -n $ALL ]]; then
   MPI_BUILD=1
-  CILK=1
   BLAS_BUILD=1
-  CBLAS_BUILD=1
   LAPACK_BUILD=1
   BLACS=1
   SCALAPACK=1
   AMD=1
-  CAMD=1
+  #CAMD=1
   CCOLAMD=1
   COLAMD=1
   METIS_BUILD=1
@@ -146,6 +155,10 @@ if [[ -n $ALL ]]; then
   SUPERLU=1
   BEBOP=1
   MATIO=1
+  SUPERLU_DIST=1
+  CBLAS_BUILD=1
+  CILK=1
+  OPENBLAS=1
 fi
 
 # = build Cilk and CBLAS if TAUCS was chosen
@@ -162,7 +175,6 @@ function err() {
 function info() {
   echo "* $*"
 }
-
 
 # = This function converts a static library (.a) to a dynamically linked library (.so).
 # some notes on dynamic library tools:
@@ -190,7 +202,7 @@ function a2so() {
   rm -rf $F-d
 }
 
-# = This function looks in previously set search paths for a library ($1).
+# = This function looks in previously set search paths for a library ($1). Provide library without .so or lib. 
 function find_library() {
   libfound_err=1
   libname=$1
@@ -316,7 +328,7 @@ if [[ -n $MPI_BUILD ]]; then
         MPI_PATH=${INSTALL_BASE_DIR}
       ;;
       * )
-        err ${MPI} "build/install not yet implemented"
+        err ${MPI} "build/install not yet implemented" # TODO
       ;;
     esac
   else
@@ -341,10 +353,12 @@ info "  Using MPI: ${O}"
 [[ ${O} =~ "Open MPI" ]] && MPI="openmpi" && info "    setting MPI variable to match: ${MPI}"
 info "  using ${MPI_PATH}/lib/libmpi.so"
 
+# = openblas
 if [[ -n $OPENBLAS ]]; then
     echo "TODO openblas is not implemented yet"
 fi
-
+ 
+# = Cilk
 if [[ -n $CILK ]]; then
   info "CILK"
   cd ${S}
@@ -434,8 +448,7 @@ else
     fi
 fi
 
-
-
+# = lapack
 if [[ -n $LAPACK_BUILD ]]; then
   info "LAPACK"
   LAPACK_LIB=${INSTALL_LIB_DIR}/liblapack.a
@@ -473,78 +486,7 @@ fi
 LAPACK_DLIB="-L${LAPACK_PATH} -llapack"
 info "  using ${LAPACK_PATH}/liblapack.so"
 
-# BLACS is now included in scaLAPACK as of 2.0
-## if [[ -n $BLACS ]]; then
-##   # get BLACS [ScaLAPACK communications]
-##   info "BLACS"
-##   cd ${S}
-##   get_and_unpack blacs http://www.netlib.org/blacs/mpiblacs.tgz
-##   info "  patching"
-##   get_and_unpack blacs http://www.netlib.org/blacs/mpiblacs-patch03.tgz
-##   cd ${S}/blacs/BLACS
-##   cp BMAKES/Bmake.MPI-LINUX Bmake.inc
-##   # fix up makefile
-##   # Note: have to escape paths to make sed happy
-##   sed -i "s/\(F77  *=\) .*/\1 ${MPIF77//\//\\/}/" Bmake.inc
-##   sed -i "s/\(CC  *=\) .*/\1 ${MPICC//\//\\/}/" Bmake.inc
-##   sed -i "s/\(BTOPdir =\) .*/\1 ${PWD//\//\\/}/" Bmake.inc
-##   sed -i "s/\(PLAT =\) .*/\1 ${MACHINE}/" Bmake.inc
-##   sed -i "s/\(MPIdir =\) .*/\1 ${MPI_PATH//\//\\/}/" Bmake.inc
-##   sed -i "s/\(MPILIB =\) .*/\1 ${MPI_DLIB//\//\\/}/" Bmake.inc
-##   sed -i "s/\(F77NO_OPTFLAGS =\) .*/\1 -fPIC/" Bmake.inc
-##   sed -i "s/\(CCFLAGS.*=\) .*/\1 -O4 -fPIC/" Bmake.inc
-##   # from INSTALL/EXE/xintface helper program
-##   sed -i "s/\(INTFACE.*=\) .*/\1 -DAdd_/" Bmake.inc
-##   # from INSTALL/EXE/xtc_CsameF77 helper program
-##   # TODO when next line is uncommented F works C fails, and vice-versa for commenting it (C works, but not F)
-##   # TODO F version hangs on repeated sums test (xFbtest)
-##   sed -i "s/\(TRANSCOMM.*=\) .*/\1 -DUseMpi2/" Bmake.inc
-##   #sed -i "s/\(TRANSCOMM.*=\) .*/\1 /" Bmake.inc
-##   #sed -i "s/\(WHATMPI.*=\) .*/\1 -DUseCMpi/" Bmake.inc
-##   # for openmpi, must fix for mpif.h
-##   info "    MPI is ${MPI}"
-##   if [ ${MPI} == "openmpi" ]; then
-##     sed -i 's/ln -s $(MPIINCdir)\/mpif.h mpif.h/ln -s $(MPIINCdir)\/mpif*.h ./' SRC/MPI/Makefile
-##     sed -i 's/mpif.h/mpif*.h/' SRC/MPI/Makefile
-##   fi
-##   info "  build"
-##   ${MAKE} mpi &> /dev/null || err blacs "build failed"
-##   for i in blacsCinit blacsF77init blacs; do # rename
-##     cp LIB/${i}_MPI-${MACHINE}-0.a  ${INSTALL_LIB_DIR}/libmpi${i}.a
-##   done
-##   # Note: blacs is stupid - try and fix the broken circular dependancies w/in
-##   mkdir t
-##   cd t
-##   cp ${INSTALL_LIB_DIR}/libmpiblacsCinit.a .
-##   cp ${INSTALL_LIB_DIR}/libmpiblacsF77init.a .
-##   cp ${INSTALL_LIB_DIR}/libmpiblacs.a .
-##   ar x libmpiblacsF77init.a
-##   ar x libmpiblacs.a
-##   ar x libmpiblacsF77init.a
-##   for i in *.C; do
-##     mv $i ${i/.C/.oo}
-##   done
-##   gcc -shared *.o *.oo -Wl,-rpath,${INSTALL_LIB_DIR} -o libblacs-mpi-f77.so ${MPI_DLIB} -lmpi_f77
-##   mv libblacs-mpi-f77.so ${INSTALL_LIB_DIR}/
-##   rm *.o
-##   ar x libmpiblacsCinit.a
-##   ar x libmpiblacs.a
-##   ar x libmpiblacsCinit.a
-##   for i in *.C; do
-##     mv $i ${i/.C/.oo}
-##   done
-##   gcc -shared *.o *.oo -Wl,-rpath,${INSTALL_LIB_DIR} -o libblacs-mpi-c.so ${MPI_DLIB} -lmpi_f77
-##   mv libblacs-mpi-c.so ${INSTALL_LIB_DIR}/
-##   cd ..
-##   rm -rf t
-## fi
-## BLACS_PATH=${INSTALL_LIB_DIR}
-## [[ ! -f ${BLACS_PATH}/libblacs-mpi-f77.so ]] && err blacs "can't find libblacs-mpi-f77.so at ${BLACS_PATH}"
-## info "  using ${BLACS_PATH}/libblacs-mpi-f77.so"
-## BLACSF_DLIB="-L${BLACS_PATH} -lblacs-mpi-f77"
-## BLACSC_DLIB="-L${BLACS_PATH} -lblacs-mpi-c"
-
-
+# = ScaLAPACK
 if [[ -n $SCALAPACK ]]; then
   # get ScaLAPACK
   # Note: ScaLAPACK breaks on parallel build
@@ -594,6 +536,14 @@ fi
 info "  using ${SCALAPACK_PATH}/libscalapack.so"
 SCALAPACK_DLIB="-L${SCALAPACK_PATH} -lscalapack"
 
+# = cblas
+if [ -n CBLAS ]; then
+  err cblas "Not implemented as of now." # TODO
+
+# = CombBLAS
+if [ -n COMBBLAS ]; then
+  err combblas "Not implemented as of now." # TODO
+fi
 
 # === ORDERINGS ===
 info "== orderings =="
@@ -729,7 +679,6 @@ if [[ -n $SCOTCH ]]; then
   sed -i "s/\(^CFLAGS.*= *-O3\)/\1 -fPIC -I${MPI_INC//\//\\/}/" Makefile.inc
   sed -i "s/\(^CCP.*=\).*/\1 ${MPICC//\//\\/}/" Makefile.inc
   info "  build"
-#  ${MAKE} scotch &> /dev/null || err scotch "scotch build failed"
   MAKE_SAVE=${MAKE}
   MAKE=make
   ${MAKE} ptscotch &> /dev/null || err scotch "ptscotch build failed"
@@ -737,19 +686,12 @@ if [[ -n $SCOTCH ]]; then
   info "  install"
   ${MAKE} prefix=${INSTALL_BASE_DIR} install &> /dev/null || err scotch "install failed"
   cp ../lib/*mumps.a ${INSTALL_LIB_DIR}/
-#  a2so ${INSTALL_LIB_DIR}/libscotcherr.a
-#  a2so ${INSTALL_LIB_DIR}/libscotch.a   -L${INSTALL_LIB_DIR} -lscotcherr -lz -lrt -lpthread -lm
   a2so ${INSTALL_LIB_DIR}/libptscotcherr.a ${MPI_DLIB}
   a2so ${INSTALL_LIB_DIR}/libptscotch.a -L${INSTALL_LIB_DIR} -lptscotcherr ${MPI_DLIB} -lz
-#  a2so ${INSTALL_LIB_DIR}/libscotchmetis.a -L${INSTALL_LIB_DIR} -lscotch
-#  a2so ${INSTALL_LIB_DIR}/libesmumps.a   -L${INSTALL_LIB_DIR} -lscotch
   a2so ${INSTALL_LIB_DIR}/libptesmumps.a -L${INSTALL_LIB_DIR} -lptscotch
 fi
-#[[ ! -f ${INSTALL_LIB_DIR}/libscotch.so ]] && err scotch "can't find libscotch.so at ${INSTALL_LIB_DIR}"
 [[ ! -f ${INSTALL_LIB_DIR}/libptscotch.so ]] && err scotch "can't find libptscotch.so at ${INSTALL_LIB_DIR}"
-#SCOTCH_DLIB="-L${INSTALL_LIB_DIR} -lscotch -lesmumps"
 PTSCOTCH_DLIB="-L${INSTALL_LIB_DIR} -lptscotch -lptesmumps"
-#info "  using ${INSTALL_LIB_DIR}/libscotch.so"
 info "  using ${INSTALL_LIB_DIR}/libptscotch.so"
 
 # TODO get AMF
@@ -1032,6 +974,12 @@ if [[ -n $SUPERLU ]]; then
   cp ${S}/superlu/SuperLU_DIST_${SUPERLU_VER}/SRC/*.h ${INSTALL_INC_DIR}/
 fi
 
+# = SuperLU_dist
+
+if [ -n $SUPERLU_DIST ]; then
+  err SuperLU_dist "Not implemented as of now." # TODO
+fi
+
 info "== I/O =="
 if [[ -n $BEBOP ]]; then
   info "BeBOP Sparse Matrix Converter"
@@ -1073,11 +1021,11 @@ if [[ -n $MATIO ]]; then
   make install || err matio "make install"
 fi
 
+# == FINALIZING ==
 #sleep 2
 touch ${INSTALL_LIB_DIR}
 
 TOC=$(date +%s)
 let DELTA=${TOC}-${TIC}
-
 
 info "Finished $(date) (${DELTA}s)"  #TODO $(date --date=${DELTA} +%T))"
