@@ -9,7 +9,7 @@
 
 
 # == CHANGE THESE VARIABLES ==
-# = Select implementations.
+# = Select implementations. These variables are then used to match library names.
 MPI="openmpi2" # mpich2 or mpich1 or openmpi or local or skip
 BLAS="openblas" # netlib or atlas or local
 CBLAS="CombBLAS"
@@ -156,7 +156,7 @@ if [[ -n $ALL ]]; then
   BEBOP=1
   MATIO=1
   SUPERLU_DIST=1
-  CBLAS_BUILD=1
+  CBLAS=1
   CILK=1
   OPENBLAS=1
 fi
@@ -207,15 +207,18 @@ function find_library() {
   libfound_err=1
   libname=$1
   for path in $libsearchpath; do
-    path_="$path/lib${libname}.so*"
-    if [ -f $path_ ]; then 
+    if [ -e "$path/lib${libname}.so" ]; then # TODO make it so that *.so.2 is found as well 
       libpath="$path"
       libfound_err=0
     fi   
-  done 
-  if [ "$libfound_err" -eq "1" ]; then
-    err $libname "shared library not found"
-  fi  
+  done
+
+  # check alternate names
+  if [[ "$libname" = "blas" ]]; then find_library openblas; fi  
+  if [[ "$libname" = "scalapack" ]]; then find_library scalapack-openmpi; fi
+  if [[ "$libname" = "ptscotch" ]]; then find_library scotch; fi
+  
+  if [ "$libfound_err" -eq "1" ]; then err $libname "not found"; fi  
 }
 
 # = This function downloads and unpacks a package if it wasn't found in the directory. $1 - library name (without lib, so), $2 - source link
@@ -427,26 +430,20 @@ if [[ -n $BLAS_BUILD ]]; then
     *) err ${BLAS} "bad blas choice";;
   esac
 fi
-# find blas install dir, prefer local install
-# TODO this could certainly look better
-if [[ ( -f ${INSTALL_LIB_DIR}/libblas.so) || (-f ${INSTALL_LIB_DIR}/libopenblas.so) ]]; then
-  BLAS_PATH=${INSTALL_LIB_DIR}
-else
-  find_library blas
-  BLAS_PATH="libpath"
-fi
-if [[ (! -f ${BLAS_PATH}/libblas.so) || (! -f ${BLAS_PATH}/libopenblas.so) ]]; then
-  err blas "can't find libblas.so or libopenblas.so at ${BLAS_PATH}"
-else
-    BLAS_DLIB="-L${BLAS_PATH}"
-    if [[ -f ${BLAS_PATH}/libblas.s  ]]; then
-        BLAS_DLIB="${BLAS_DLIB} -lblas"
-        info "  using ${BLAS_PATH}/libblas.so"
-    elif [[ ${INSTALL_LIB_DIR}/libopenblas.so  ]]; then
-        BLAS_DLIB="${BLAS_DLIB} -lopenblas"
-        info "  using ${BLAS_PATH}/libopenblas.so"
-    fi
-fi
+# find blas install dir
+# TODO prefer local install 
+find_library openblas
+find_library blas
+BLAS_PATH=$libpath
+BLAS_DLIB="-L${BLAS_PATH} -lblas"
+#if [[ -f ${BLAS_PATH}/libblas.so  ]]; then
+#  BLAS_DLIB="${BLAS_DLIB} -lblas"
+#  info "  using ${BLAS_PATH}/libblas.so"
+#elif [[ ${INSTALL_LIB_DIR}/libopenblas.so  ]]; then
+#  BLAS_DLIB="${BLAS_DLIB} -lopenblas"
+#  info "  using ${BLAS_PATH}/libopenblas.so"
+#fi
+
 
 # = lapack
 if [[ -n $LAPACK_BUILD ]]; then
@@ -480,7 +477,7 @@ if [[ -f ${INSTALL_LIB_DIR}/liblapack.so ]]; then
   LAPACK_PATH=${INSTALL_LIB_DIR}
 else
   find_library lapack
-  LAPACK_PATH=libpath
+  LAPACK_PATH=$libpath
 fi
 [[ ! -f ${LAPACK_PATH}/liblapack.so ]] && err lapack "can't find liblapack.so at ${LAPACK_PATH}"
 LAPACK_DLIB="-L${LAPACK_PATH} -llapack"
@@ -527,21 +524,18 @@ if [[ -n $SCALAPACK ]]; then
 
   MAKE=${MAKE_SAVE}
 fi
-SCALAPACK_PATH=${INSTALL_LIB_DIR}
-if [[ -f ${INSTALL_LIB_DIR}/libscalapack.so ]]; then
-  find_library scalapack
-  SCALAPACK_PATH=libpath
-fi
-[[ ! -f ${SCALAPACK_PATH}/libscalapack.so ]] && err scalapack "can't find libscalapack.so at ${SCALAPACK_PATH}"
+find_library scalapack
+SCALAPACK_PATH=$libpath
 info "  using ${SCALAPACK_PATH}/libscalapack.so"
 SCALAPACK_DLIB="-L${SCALAPACK_PATH} -lscalapack"
 
 # = cblas
-if [ -n CBLAS ]; then
+if [[ "$CBLAS" = "1" ]]; then
   err cblas "Not implemented as of now." # TODO
+fi
 
 # = CombBLAS
-if [ -n COMBBLAS ]; then
+if [[ -n $COMBBLAS ]]; then
   err combblas "Not implemented as of now." # TODO
 fi
 
@@ -575,14 +569,11 @@ if [[ -n $AMD ]]; then
   cp Lib/libcamd.a  ${INSTALL_LIB_DIR}/
   a2so ${INSTALL_LIB_DIR}/libcamd.a -lm
 fi
-AMD_PATH=/usr/lib64
 
-[[ ! -f ${AMD_PATH}/libamd.so ]] && err amd "can't find libamd.so ${AMD_PATH}"
-[[ ! -f ${AMD_PATH}/libcamd.so ]] && err camd "can't find libcamd.so ${AMD_PATH}"
-AMD_DLIB="-L${AMD_PATH} -lamd"
-CAMD_DLIB="-L${AMD_LIB} -lcamd"
-info "  using ${AMD_LIB}/libamd.so"
-info "  using ${AMD_LIB}/libcamd.so"
+find_library amd
+AMD_DLIB="-L$libpath -lamd"
+find_library camd
+CAMD_DLIB="-L$libpath -lcamd"
 
 # = CCOLAMD
 
@@ -599,9 +590,9 @@ if [[ -n $CCOLAMD ]]; then
   cp Lib/libccolamd.a  ${INSTALL_LIB_DIR}/
   a2so ${INSTALL_LIB_DIR}/libccolamd.a -lm
 fi
-[[ ! -f ${INSTALL_LIB_DIR}/libccolamd.so ]] && err ccolamd "can't find libccolamd.so ${INSTALL_LIB_DIR}"
-CCOLAMD_DLIB="-L${INSTALL_LIB_DIR} -lccolamd"
-info "  using ${INSTALL_LIB_DIR}/libccolamd.so"
+find_library ccolamd
+CCOLAMD_DLIB="-L$libpath -lccolamd"
+info "  using $libpath/libccolamd.so"
 
 if [[ -n $COLAMD ]]; then
   info "COLAMD"
@@ -616,9 +607,9 @@ if [[ -n $COLAMD ]]; then
   cp Lib/libcolamd.a  ${INSTALL_LIB_DIR}/
   a2so ${INSTALL_LIB_DIR}/libcolamd.a -lm
 fi
-[[ ! -f ${INSTALL_LIB_DIR}/libcolamd.so ]] && err colamd "can't find libcolamd.so ${INSTALL_LIB_DIR}"
-COLAMD_DLIB="-L${INSTALL_LIB_DIR} -lcolamd"
-info "  using ${INSTALL_LIB_DIR}/libcolamd.so"
+find_library colamd
+COLAMD_DLIB="-L$libpath -lcolamd"
+info "  using $libpath/libcolamd.so"
 
 # = METIS
 
@@ -690,9 +681,9 @@ if [[ -n $SCOTCH ]]; then
   a2so ${INSTALL_LIB_DIR}/libptscotch.a -L${INSTALL_LIB_DIR} -lptscotcherr ${MPI_DLIB} -lz
   a2so ${INSTALL_LIB_DIR}/libptesmumps.a -L${INSTALL_LIB_DIR} -lptscotch
 fi
-[[ ! -f ${INSTALL_LIB_DIR}/libptscotch.so ]] && err scotch "can't find libptscotch.so at ${INSTALL_LIB_DIR}"
-PTSCOTCH_DLIB="-L${INSTALL_LIB_DIR} -lptscotch -lptesmumps"
-info "  using ${INSTALL_LIB_DIR}/libptscotch.so"
+find_library ptscotch
+PTSCOTCH_DLIB="-L$libpath -lptscotch -lptesmumps"
+info "  using $libpath/libptscotch.so"
 
 # TODO get AMF
 # Note: PORD is included in MUMPS
@@ -727,10 +718,10 @@ if [[ -n $CHOLMOD ]]; then
   cp Include/cholmod*.h ${INSTALL_INC_DIR}/
   cp Lib/libcholmod.a  ${INSTALL_LIB_DIR}/
   a2so ${INSTALL_LIB_DIR}/libcholmod.a ${AMD_DLIB} ${CAMD_DLIB} ${METIS_DLIB} ${BLAS_DLIB} ${CCOLAMD_DLIB} ${COLAMD_DLIB} ${LAPACK_DLIB} -lm
+  find_library cholmod
+  CHOLMOD_DLIB="-L$libpath -lcholmod"
+  info "  using $libpath/libcholmod.so"
 fi
-[[ ! -f ${INSTALL_LIB_DIR}/libcholmod.so ]] && err cholmod "can't find libcholmod.so at ${INSTALL_LIB_DIR}"
-CHOLMOD_DLIB="-L${INSTALL_LIB_DIR} -lcholmod"
-info "  using ${INSTALL_LIB_DIR}/libcholmod.so"
 
 # = UMFPACK
 if [[ -n $UMFPACK ]]; then
@@ -976,7 +967,7 @@ fi
 
 # = SuperLU_dist
 
-if [ -n $SUPERLU_DIST ]; then
+if [ "$SUPERLU_DIST" = "1" ]; then
   err SuperLU_dist "Not implemented as of now." # TODO
 fi
 
@@ -987,14 +978,19 @@ if [[ -n $BEBOP ]]; then
   get_and_unpack bebop http://bebop.cs.berkeley.edu/smc/tarballs/bebop_util.tar.gz
   get_and_unpack bebop http://bebop.cs.berkeley.edu/smc/tarballs/sparse_matrix_converter.tar.gz
   cd ${S}/bebop/bebop_make
+  ln -s -f ./Makefile.include.linux ./Makefile.include
+  # change the lpthread flag pthread flag
+  sed -i s/"LIBS += -lpthread"/"LIBS += -pthread"/ ./setup
+  # include custom install lib dir
   sed -i "s/\(^LDFLAGS\)=.*/\1=-Wl,-rpath,${INSTALL_LIB_DIR//\//\\/}/" Makefile.include
   cd ${S}/bebop/bebop_util
   info "  build util lib"
-  sed -i "s/\/dev\/random/\/dev\/urandom/" src/random_number.c # prevent blocking when not enough entropy
+  # TODO the -lpthread flag in tests/Makefile is at the wrong place how to fix this??
+  #sed -i "s/\/dev\/random/\/dev\/urandom/" src/random_number.c # prevent blocking when not enough entropy
   make &> /dev/null || err bebop "util build failed"
   cd ${S}/bebop/sparse_matrix_converter
-  info "  build sparse matrix convertor"
-  make &> /dev/null || err bebop "sparse matrix convertor build failed"
+  info "  build sparse matrix converter"
+  make &> /dev/null || err bebop "sparse matrix converter build failed"
   info "  install"
   cd ${S}/bebop
   for i in bebop_util sparse_matrix_converter; do
@@ -1029,3 +1025,4 @@ TOC=$(date +%s)
 let DELTA=${TOC}-${TIC}
 
 info "Finished $(date) (${DELTA}s)"  #TODO $(date --date=${DELTA} +%T))"
+exit
