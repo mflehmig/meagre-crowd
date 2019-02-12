@@ -1,21 +1,22 @@
 ;Solvers;;;;;;;
 Dependencies;MUMPS;Pardiso;WSMP;SuperLU;SuperLU_MT;SuperLU_dist;UMFPACK (part of SuiteSparse);TAUCS
-gfortran/ifort;;X;X;X;X;X;;
-gcc/icc;;X;;X;;;;X
-LAPACK;X;X;;;;;X;X
-Parallel BLAS;X;X;;X;X;X;X;X
-serial BLAS;;;X;;;;;
-MPI;;;X;;;X;;
-OpenMP;X;;;X;X;X;;
-AMD;;;;;;;X;X
-CHOLMOD;;;;;;;X;
-CAMD;;;;;;;X;
-(C)COLAMD;;;;;;;X;X
-metis;;;;;;;X;X
-CombBLAS;;;;;;X;;
-Cilk;;;;;;;;
-m;X;X;X;X;X;X;X;X
+AMD;;;;;;;X;
 BLACS;X;;;;;;;
-ScaLAPACK;X;;;;;;;
-PT-SCOTCH;X;;;;;;;
+CAMD;;;;;;;;
+(C)COLAMD;;;;;;;X;
+CHOLMOD;;;;;;;(X);
+Cilk;;;;;;;;(X)
+CombBLAS;;;;;;X;;
+gcc/icc;;X;;X;X;X;;X
+gfortran/ifort;;X;X;(X);X;X;;
+LAPACK;X;X;;;;;X;X
+m;X;X;X;X;X;X;X;X
+metis;;;;;;;;X
+MPI;;;X;;;X;;
+OpenMP;X;;;X;;X;;
+Parallel BLAS;X;X;;X;X;X;X;X
 ParMETIS;X;;;;;;;
+pthread;;;X;;X;;;X
+PT-SCOTCH;X;;;;;;;
+ScaLAPACK;X;;;;;;;
+serial BLAS;;;X;;;;;

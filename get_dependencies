@@ -110,6 +110,7 @@ while [ $# != 0 ]; do
     "amd") AMD=1;;
     "camd") AMD=1;; # is included in amd
     "ccolamd") CCOLAMD=1;;
+    "combblas") COMBBLAS=1;;
     "colamd") COLAMD=1;;
     "metis") METIS_BUILD=1;;
     "scotch") SCOTCH=1;;
@@ -129,7 +130,7 @@ while [ $# != 0 ]; do
     "nopar") PARALLEL_MAKE_DISABLED=yes;;
     "clean") echo "cleaning..." && rm -rf ${DEP_DIRS} && exit 0;;
     "distclean") echo "cleaning..." && rm -rf ${DEP_DIRS} && rm -rf ${INSTALL_BASE_DIR} && exit 0;;
-    *) help && err "options" "unrecognized option '$1'";;
+    *) help && echo "ERROR: options - unrecognized option '$1'";;
   esac
   shift;
 done
@@ -536,7 +537,18 @@ fi
 
 # = CombBLAS
 if [[ -n $COMBBLAS ]]; then
-  err combblas "Not implemented as of now." # TODO
+  info "CombBLAS"
+  COMBBLAS_VERSION="beta_16_2"
+  get_and_unpack combblas http://eecs.berkeley.edu/~aydin/CombBLAS_FILES/CombBLAS_${COMBBLAS_VERSION}.tgz
+  cd combblas/CombBLAS_${COMBBLAS_VERSION}
+  mkdir _build _install
+  cd _build
+  info "  configuring .."
+  CC=mpicc CXX=mpicxx cmake .. -DCMAKE_INSTALL_PREFIX=../_install &> /dev/null || err combblas "configuring failed"
+  info "  building .."
+  make &> /dev/null || err combblas "build failed"
+  info "  installing .."
+  make install &> /dev/null || err combblas "install failed"  # optional. current get_dependencies needs it though
 fi
 
 # === ORDERINGS ===
@@ -921,7 +933,7 @@ if [[ -n $SUPERLU ]]; then
   # get superlu
   info "SuperLU"
   get_and_unpack superlu http://crd.lbl.gov/~xiaoye/SuperLU/superlu_dist_${SUPERLU_VER}.tar.gz
-  cd ${S}/superlu/SuperLU_DIST_${SUPERLU_VER}
+  cd ${S}/superlu/SuperLU${SUPERLU_VER}
   cp MAKE_INC/make.xt4 ./make.inc
   sed -i "s/\(^PLAT.*=\).*/\1 ${MACHINE}/" make.inc
   sed -i "s/\(^DSuperLUroot.*=\).*/\1 ${INSTALL_BASE_DIR//\//\\/}/" make.inc
@@ -968,7 +980,12 @@ fi
 # = SuperLU_dist
 
 if [ "$SUPERLU_DIST" = "1" ]; then
-  err SuperLU_dist "Not implemented as of now." # TODO
+  info "SuperLU_dist"
+  get_and_unpack superlu_dist http://crd-legacy.lbl.gov/~xiaoye/SuperLU/superlu_dist_6.1.0.tar.gz
+  cd superlu_dist/SuperLU_DIST_6.1.0
+
+  # needs ParMETIS (finds package installs by itself)
+  err SuperLU_dist "Not fully implemented as of now." # TODO
 fi
 
 info "== I/O =="
@@ -979,7 +996,7 @@ if [[ -n $BEBOP ]]; then
   get_and_unpack bebop http://bebop.cs.berkeley.edu/smc/tarballs/sparse_matrix_converter.tar.gz
   cd ${S}/bebop/bebop_make
   ln -s -f ./Makefile.include.linux ./Makefile.include
-  # change the lpthread flag pthread flag
+  # change the lpthread flag to pthread flag
   sed -i s/"LIBS += -lpthread"/"LIBS += -pthread"/ ./setup
   # include custom install lib dir
   sed -i "s/\(^LDFLAGS\)=.*/\1=-Wl,-rpath,${INSTALL_LIB_DIR//\//\\/}/" Makefile.include
@@ -1007,14 +1024,26 @@ fi
 
 if [[ -n $MATIO ]]; then
   info "MAT File I/O Library"
+  info "cloning git repository ..."
   # the last release hasn't been in more than a year: use the git repo
-  git clone git://matio.git.sourceforge.net/gitroot/matio/matio ${S}/matio
+  # git clone git://matio.git.sourceforge.net/gitroot/matio/matio ${S}/matio # what is this
+  # delete if the dir exists
+  if [ -d ./matio ]; then
+    rm -rf matio
+  fi
+  git clone https://github.com/tbeu/matio.git &> /dev/null
   cd ${S}/matio
+  info "configuring ..."
   # wow: software that has been properly packaged!
-  ./bootstrap || err matio "bootstrap"
-  ./configure --prefix="${INSTALL_BASE_DIR}" --disable-static || err matio "configure"
-  make || err matio "make"
-  make install || err matio "make install"
+  # ./bootstrap || err matio "during executing bootstrap" # and what is this
+  sh autogen.sh &> /dev/null || err matio "autogen"
+  ./configure --prefix="${INSTALL_BASE_DIR}" --disable-static &> /dev/null || err matio "configure"
+  info "compiling ..."
+  make &> /dev/null || err matio "make"
+  # info "testing software ..."
+  # make check &> /dev/null || err matio "check test failed"
+  info "installing ..."
+  sudo make install &> /dev/null || err matio "make install"
 fi
 
 # == FINALIZING ==
