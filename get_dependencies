@@ -1,4 +1,4 @@
-#! /bin/sh
+#! /bin/bash
 
 # === USAGE ===
 # This script downloads, unpacks and installs a number of targets. Meagre-crowd
@@ -887,7 +887,7 @@ EOF
 function build_superlu() {
   # get superlu
   info "SuperLU"
-  get_and_unpack superlu http://crd.lbl.gov/~xiaoye/SuperLU/superlu_dist_${SUPERLU_VER}.tar.gz
+  get_and_unpack superlu http://crd.lbl.gov/~xiaoye/SuperLU/superlu_${SUPERLU_VER}.tar.gz
   cd ${S}/superlu/SuperLU${SUPERLU_VER}
   cp MAKE_INC/make.xt4 ./make.inc
   sed -i "s/\(^PLAT.*=\).*/\1 ${MACHINE}/" make.inc
@@ -946,6 +946,7 @@ function build_superlu_dist() {
   sed -i 's/-std=c++11/-std=c++14/g' $superlu_dist_root/CMakeLists.txt # set std to c++14
   sed -i 's/CMAKE_CXX_STANDARD 11/CMAKE_CXX_STANDARD 14/g' $superlu_dist_root/CMakeLists.txt # set std to c++14
   
+  echo "  configuring .."
   # parmetis
   find_header parmetis
   parmetis_incpath=$incpath
@@ -971,16 +972,18 @@ function build_superlu_dist() {
   cmake .. \
     -Denable_tests=OFF\
     -DPTL_ENABLE_PARMETISLIB=ON \
-    -DTPL_PARMETIS_INCLUDE_DIRS="$parmetis_incpath" \
-    -DTPL_PARMETIS_LIBRARIES="$parmetis_libpath/libparmetis.so" \
-#    -DTPL_ENABLE_COMBBLASLIB=ON \
+    -DTPL_PARMETIS_INCLUDE_DIRS="$parmetis_incpath;$metis_incpath" \
+    -DTPL_PARMETIS_LIBRARIES="$parmetis_libpath/libparmetis.so;$metis_libpath/libmetis.so" \
+    -DTPL_ENABLE_COMBBLASLIB=ON \
     -DTPL_COMBBLAS_INCLUDE_DIRS="$combblas_incpath" \
     -DTPL_COMBBLAS_LIBRARIES="$combblas_libpath/libCombBLAS.a" \
     -DCMAKE_Fortran_COMPILER="gfortran" \
     -DCMAKE_VERBOSE_MAKEFILE:BOOL=ON \
     -DCMAKE_INSTALL_PREFIX=${INSTALL_BASE_DIR} \
-    -DCMAKE_EXE_LINKER_FLAGS="-lmetis"
-  make VERBOSE=1
+    -DCMAKE_EXE_LINKER_FLAGS="-lmetis" &> /dev/null || err superlu_dist "configuring failed"
+  echo "  building .."
+  make &> /dev/null || err superlu_dist "build failed"
+  echo "  installing .." # TODO
 } # /build_superlu_dist
 
 # == I/O BUILD FUNCTIONS ==
@@ -1040,11 +1043,23 @@ function build_matio() {
   # info "testing software ..."
   # make check &> /dev/null || err matio "check test failed"
   info "  installing ..."
-  sudo make install &> /dev/null || err matio "make install"
+  #make install &> /dev/null || err matio "make install" #TODO make the install local
+  ##### INSTALL ########
+  cd /home/thomas/Code/meagre-crowd.git/matio/src
+  bash ../libtool --mode=install install -c libmatio.la '${INSTALL_LIB_DIR}'
+  install -c .libs/libmatio.so.4.4.2 ${INSTALL_LIB_DIR}/libmatio.so.4.4.2
+  install -c -m 644 matio.h '${INSTALL_INC_DIR}'
+  install -c -m 644 matio_pubconf.h '${INSTALL_INC_DIR}'
+  mkdir -p '${INSTALL_BASE_DIR}/bin'
+  bash ../libtool --mode=install install -c matdump '${INSTALL_BASE_DIR}/bin'
+  mkdir -p '${INSTALL_BASE_DIR}/share/man/man3'
+  install -c -m 644 Mat_Close.3 Mat_CreateVer.3 Mat_GetDir.3 Mat_GetFilename.3 Mat_GetLibraryVersion.3 Mat_GetVersion.3 Mat_Open.3 Mat_Rewind.3 Mat_VarAddStructField.3 Mat_VarCreate.3 Mat_VarCreateStruct.3 Mat_VarDelete.3 Mat_VarFree.3 Mat_VarGetNumberOfFields.3 Mat_VarGetSize.3 Mat_VarGetStructFieldnames.3 Mat_VarGetStructs.3 Mat_VarGetStructsLinear.3 Mat_VarRead.3 Mat_VarReadInfo.3 Mat_VarReadNext.3 Mat_VarReadNextInfo.3 Mat_VarPrint.3 Mat_VarWrite.3 Mat_VarWriteAppend.3 '${INSTALL_BASE_DIR}/share/man/man3'
+  mkdir -p '${INSTALL_LIB_DIR}/pkgconfig'
+  install -c -m 644 matio.pc '${INSTALL_LIB_DIR}/pkgconfig'
 } # /bebop
 
 
-# =================================================== #
+########################################################################
 # === MAIN === (if this was C, all of below would be main)
 # == DISPLAY THE HELP TEXT == if the script was invoked without options
 [ $# -eq 0 ] && help && exit 2
