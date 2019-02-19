@@ -6,28 +6,45 @@
 # for a full list of a solver's dependencies.
 # Usage: Before invoking
 # bash get_dependencies <target1> <target2> ... <targetn>
-# adapt the variables below to your custom. 
+# adapt the variables below to your custom.
+#
+# Script won't install a target if a directory with the name of <target> already exists 
+# in the base directory (= the directory you found this script in).
 
 # === CHANGE THESE VARIABLES ===
-# == Select implementations. == These variables are then used to match 
-# library names in their repository. If you don't intend to build a
-# library, you can safely skip the version and name.
-MPI="openmpi2" # mpich2 or mpich1 or openmpi or local or skip
-BLAS="openblas" # netlib or atlas or local
-CBLAS="CombBLAS"
-LAPACK="lapack3" # netlib or local
-METIS="parmetis" # parmetis or metis -- metis is required by cholmod
 
-#PARALLEL_MAKE_DISABLED="yes" # force make to use a single core for compiling
-PARALLEL_MAKE_DISABLED="no" # please choose one!
+# == parallel make ==
+PARALLEL_MAKE_DISABLED="yes" # force make to use a single core for compiling
+#PARALLEL_MAKE_DISABLED="no" # please choose one!
+
+# == custom lib search path ==
+# This script looks in common paths for a dependency. If it can't find your install, set this.
+# customsearchpath="<path1>
+#          <path2"
+
+# == Select implementations. == 
+# These variables are then used to choose a build. You can only build the libs that
+# are listed behind. If you don't intend to build a
+# library, you can safely skip the name. If you need to use one of these libs
+# as a dependency for a target and have it already built, you can set another name, 
+# it doesn't need to be listed behind.
+MPI="" # mpich2/mpich1/openmpi or local or skip
+BLAS="" # netlib/atlas/local
+CBLAS=""
+LAPACK="" # netlib or local
+METIS="" # parmetis or metis -- metis is required by cholmod
 
 # == Select Versions to download. ==
+# These variables are then used to match
+# library names in their repository. If you don't intend to build a
+# library, you can safely skip the version name.
 # = Toolkits =
 #MPICH2_MPI_VER="1.2.1p1"
 #MPICH1_MPI_VER="1.2.7p1"
 OPENMPI_VER="2.1.1-8"
 CILK_VER="7.3.0-27"
 #ATLAS_BLAS_VER=3.8.3 # latest stable
+COMBBLAS_VERSION="beta_16_2"
 OPENBLAS_VERSION="0.2.20+ds-4"
 LAPACK_VER="3.7.1-4ubuntu1"
 COMBBLAS_VER="16.2"
@@ -50,25 +67,25 @@ UMFPACK_VER="5.1.2-2"
 TAUCS_VER=2.2
 #SUPERLU_VER=2.5
 COMBBLAS_VER="16.2"
-SUPERLU_DIST_VER="6.1.0"
+SUPERLU_DIST_VERSION="6.1.0"
 #PARDISO_VER=""
 
 # === !!UNLESS YOU WANT TO EDIT THE SCRIPT, DON'T CHANGE ANYTHING BELOW!! ===
 #
-# Editing this file feels like looking for that important formula in a book 
-# without an index. That's horribly unkind, so if you want to edit, here's a 
-# little help:
+# Editing this file feels like looking for that very important formula in a book 
+# without an index. That's horribly unkind, so if you want to edit it, here's a 
+# quick help text:
 #
-# x - change here if you add a new target
+# x - change here if you intend to add a new target
 #
 # * Usage (above)
 # * Change these variables (above) (x)
 # * Unless you want to edit the script ... (this section)
-# * Function declarations (functions that don't build any tools or libs)
+# * Function declarations (basic functions that don't build any tools or libs)
 # * Build functions (functions that build libs/tools) x
-#    * Toolkit build functions
-#    * Orderings build functions
-#    * I/O tools build functions
+#    * Toolkit build functions (x)
+#    * Orderings build functions (x)
+#    * I/O tools build functions (x)
 # * Main x
 #
 # The headings work like this: 
@@ -134,7 +151,7 @@ function find_library() {
   libfound_err=1
   libname=$1
   for path in $libsearchpath; do
-    if [ -e "$path/lib${libname}.so" ]; then # TODO make it so that *.so.2 is found as well 
+    if [ -e "$path/lib${libname}.so" ] || [ -e "$path/lib${libname}.a" ]; then # TODO make it so that *.so.2 is found as well 
       libpath="$path"
       libfound_err=0
     fi   
@@ -144,9 +161,33 @@ function find_library() {
   if [[ "$libname" = "blas" ]]; then find_library openblas; fi  
   if [[ "$libname" = "scalapack" ]]; then find_library scalapack-openmpi; fi
   if [[ "$libname" = "ptscotch" ]]; then find_library scotch; fi
+  if [[ "$libname" = "combblas" ]]; then find_library CombBLAS; fi
   
-  if [ "$libfound_err" -eq "1" ]; then info "$libname not found"; fi  
+  if [ "$libfound_err" -eq "1" ]; then info "  lib$libname not found"; fi  
+  if [ "$libfound_err" -eq "0" ]; then info "  lib$libname found"; fi
 } # /find_library
+
+# == find_header == This function looks for a header ($1) in previously set search paths.
+function find_header() {
+  incfound_err=1
+  incname=$1
+  for path in $incsearchpath; do
+    if [ -e "$path/${incname}.h" ]; then
+      incpath="$path"
+      incfound_err=0
+    fi
+    if [ -e "$S/$incname/$incname.h" ]; then
+      incpath="path"
+      incfound_err=0
+    fi
+
+    # check alternate names
+    if [[ "$incname" = "combblas" ]]; then find_header CombBLAS; fi
+
+    if [ "$incfound_err" -eq "1" ]; then info "  $incname.h not found"; fi
+    if [ "$incfound_err" -eq "0" ]; then info "  $incname.h found"; fi
+  done
+}
 
 # == get_and_unpack ==
 # This function downloads and unpacks a package if it wasn't found in the directory. $1 - library name (without lib, so), $2 - source link
@@ -170,12 +211,12 @@ function get_and_unpack() {
 # TODO ?? OMP_NUM_THREADS is passed in by mpirun/exec -- does sqsub get this right?
 
 # TODO are lib/include platform specific?? should be! so when running on a new platform we don't need to mess about too much!
-info "== toolkits =="
 
 # = build_mpi =
 function build_mpi() {
   info "MPI"
   MPI_PATH=${INSTALL_BASE_DIR}
+  # only installs if directory "mpi" doesn't exist yet in the base dir
   if [[ ! -d ${S}/mpi || ${S}/mpi -nt ${INSTALL_LIB_DIR} ]]; then
     cd ${S}
     case ${MPI} in
@@ -244,7 +285,7 @@ function build_mpi() {
   else
     info "  up-to-date"
   fi
-fi
+# else it only finds the install path
 # find mpi install dir, prefer local install
 if [[ -f ${INSTALL_BASE_DIR}/bin/mpirun ]]; then
   MPI_PATH=${INSTALL_BASE_DIR}
@@ -264,10 +305,9 @@ info "  Using MPI: ${O}"
 info "  using ${MPI_PATH}/lib/libmpi.so"
 } # /build_mpi
 
-
 # = build_openblas =
-function build_openblas() {
-    echo "TODO openblas is not implemented yet"
+function build_openblas() { # TODO
+    echo "openblas is not implemented yet"
   } # /build_openblas
  
 # = build_cilk =
@@ -287,9 +327,9 @@ function build_cilk() {
   info "  build"
   ./configure
   make
-fi
+
 if [[ -n $CILK_REQUIRED ]]; then
-  info "CILK TODO for TAUCS"
+  info "CILK for TAUCS not implemented yet" # TODO
 fi
 } # /build_cilk
 
@@ -356,7 +396,6 @@ BLAS_DLIB="-L${BLAS_PATH} -lblas"
 #  info "  using ${BLAS_PATH}/libopenblas.so"
 #fi
 }
-
 
 # = build_lapack =
 function build_lapack() {
@@ -437,7 +476,7 @@ function build_scalapack() {
   a2so ${INSTALL_LIB_DIR}/libscalapack.a -Wl,-z,muldefs ${LAPACK_DLIB} ${BLAS_DLIB} ${MPI_DLIB} -lgfortran -lm
 
   MAKE=${MAKE_SAVE}
-fi
+
 find_library scalapack
 SCALAPACK_PATH=$libpath
 info "  using ${SCALAPACK_PATH}/libscalapack.so"
@@ -452,22 +491,28 @@ function build_cblas() {
 # = build_combblas =
 function build_combblas() {
   info "CombBLAS"
-  COMBBLAS_VERSION="beta_16_2"
   get_and_unpack combblas http://eecs.berkeley.edu/~aydin/CombBLAS_FILES/CombBLAS_${COMBBLAS_VERSION}.tgz
   cd combblas/CombBLAS_${COMBBLAS_VERSION}
-  mkdir _build _install
+  mkdir _build
+  mkdir _install
   cd _build
   info "  configuring .."
   CC=mpicc CXX=mpicxx cmake .. -DCMAKE_INSTALL_PREFIX=../_install &> /dev/null || err combblas "configuring failed"
   info "  building .."
   make &> /dev/null || err combblas "build failed"
   info "  installing .."
-  make install &> /dev/null || err combblas "install failed"  # optional. current get_dependencies needs it though
+  make install
+  cp ${S}/combblas/CombBLAS_${COMBBLAS_VERSION}/_install/lib/*.a ${INSTALL_LIB_DIR}
+  cp -r ${S}/combblas/CombBLAS_${COMBBLAS_VERSION}/_install/include/* ${INSTALL_INC_DIR}
+  # fix some paths for SuperLU
+  mv ${INSTALL_INC_DIR}/psort ${INSTALL_INC_DIR}/CombBLAS
+  mv ${INSTALL_INC_DIR}/usort ${INSTALL_INC_DIR}/CombBLAS
+  mv ${INSTALL_INC_DIR}/Tommy ${INSTALL_INC_DIR}/CombBLAS
+  mv ${INSTALL_INC_DIR}/graph500 ${INSTALL_INC_DIR}/CombBLAS
+  mv $S/combblas/CombBLAS_${COMBBLAS_VERSION}/BipartiteMatchings ${INSTALL_INC_DIR}/CombBLAS
 } # /build_combblas
 
 # == ORDERINGS BUILD FUNCTIONS ==
-info "== orderings =="
-
 # = build_amd =
 function build_amd() {
   info "AMD"
@@ -616,8 +661,6 @@ info "  using $libpath/libptscotch.so"
 # Note: PORD is included in MUMPS
 
 # === BUILD SOLVERS ===
-info "== solvers =="
-
 # = build_cholmod =
 function build_umfpack() {
   info "CHOLMOD"
@@ -892,16 +935,55 @@ function build_superlu() {
 # = build_superlu_dist =
 function build_superlu_dist() {
   info "SuperLU_dist"
-  SUPERLU_DIST_VERSION="6.1.0"
   get_and_unpack superlu_dist http://crd-legacy.lbl.gov/~xiaoye/SuperLU/superlu_dist_${SUPERLU_DIST_VERSION}.tar.gz
-  cd superlu_dist/SuperLU_DIST_${SUPERLU_DIST_VERSION}
-  find_library parmetis
-  err SuperLU_dist "Not fully implemented as of now." # TODO
+
+  superlu_dist_root=${S}/superlu_dist/SuperLU_DIST_${SUPERLU_DIST_VERSION}
+  cd $superlu_dist_root
+
+  # make superlu_dist happy
+  cp $INSTALL_INC_DIR/CombBLAS/CombBLAS.h $superlu_dist_root
+  cp $INSTALL_INC_DIR/CombBLAS/BipartiteMatchings/*.h $superlu_dist_root/SRC
+  sed -i 's/-std=c++11/-std=c++14/g' $superlu_dist_root/CMakeLists.txt # set std to c++14
+  sed -i 's/CMAKE_CXX_STANDARD 11/CMAKE_CXX_STANDARD 14/g' $superlu_dist_root/CMakeLists.txt # set std to c++14
+  
+  # parmetis
+  find_header parmetis
+  parmetis_incpath=$incpath
+  find_library parmetis 
+  parmetis_libpath=$libpath
+
+  # CombBLAS
+  find_header CombBLAS
+  combblas_incpath=$incpath
+  find_library combblas
+  combblas_libpath=$libpath
+  
+  # metis
+  find_header metis
+  metis_incpath=$incpath
+  find_library metis
+  metis_libpath=$libpath
+
+  mkdir _build; cd _build;
+
+  CC=mpicc CXX=mpicxx \
+  CFLAGS="-I$metis_incpath" CXXFLAGS="-I$metis_incpath" \
+  cmake .. \
+    -Denable_tests=OFF\
+    -DPTL_ENABLE_PARMETISLIB=ON \
+    -DTPL_PARMETIS_INCLUDE_DIRS="$parmetis_incpath" \
+    -DTPL_PARMETIS_LIBRARIES="$parmetis_libpath/libparmetis.so" \
+#    -DTPL_ENABLE_COMBBLASLIB=ON \
+    -DTPL_COMBBLAS_INCLUDE_DIRS="$combblas_incpath" \
+    -DTPL_COMBBLAS_LIBRARIES="$combblas_libpath/libCombBLAS.a" \
+    -DCMAKE_Fortran_COMPILER="gfortran" \
+    -DCMAKE_VERBOSE_MAKEFILE:BOOL=ON \
+    -DCMAKE_INSTALL_PREFIX=${INSTALL_BASE_DIR} \
+    -DCMAKE_EXE_LINKER_FLAGS="-lmetis"
+  make VERBOSE=1
 } # /build_superlu_dist
 
 # == I/O BUILD FUNCTIONS ==
-info "== I/O =="
-
 # = build_bebop =
 function build_bebop() {
   info "BeBOP Sparse Matrix Converter"
@@ -939,7 +1021,7 @@ function build_bebop() {
 # = build_matio =
 function build_matio() {
   info "MAT File I/O Library"
-  info "cloning git repository ..."
+  info "  cloning git repository ..."
   # the last release hasn't been in more than a year: use the git repo
   # git clone git://matio.git.sourceforge.net/gitroot/matio/matio ${S}/matio # what is this
   # delete if the dir exists
@@ -948,22 +1030,22 @@ function build_matio() {
   fi
   git clone https://github.com/tbeu/matio.git &> /dev/null
   cd ${S}/matio
-  info "configuring ..."
+  info "  configuring ..."
   # wow: software that has been properly packaged!
   # ./bootstrap || err matio "during executing bootstrap" # and what is this
   sh autogen.sh &> /dev/null || err matio "autogen"
   ./configure --prefix="${INSTALL_BASE_DIR}" --disable-static &> /dev/null || err matio "configure"
-  info "compiling ..."
+  info "  compiling ..."
   make &> /dev/null || err matio "make"
   # info "testing software ..."
   # make check &> /dev/null || err matio "check test failed"
-  info "installing ..."
+  info "  installing ..."
   sudo make install &> /dev/null || err matio "make install"
 } # /bebop
 
 
-# ===================================================
-# === MAIN === (if this was C, below is main)
+# =================================================== #
+# === MAIN === (if this was C, all of below would be main)
 # == DISPLAY THE HELP TEXT == if the script was invoked without options
 [ $# -eq 0 ] && help && exit 2
 
@@ -976,6 +1058,13 @@ TARGETS="mpi blas lapack blacs scalapack amd camd ccolamd colamd metis scotch ch
 S=${PWD}
 MACHINE=$(gcc -dumpmachine)
 INSTALL_BASE_DIR=${PWD}/${MACHINE}
+
+mkdir -p ${INSTALL_BASE_DIR}/lib
+mkdir -p ${INSTALL_BASE_DIR}/include
+mkdir -p ${INSTALL_BASE_DIR}/bin
+INSTALL_LIB_DIR=${INSTALL_BASE_DIR}/lib
+INSTALL_INC_DIR=${INSTALL_BASE_DIR}/include
+INSTALL_BIN_DIR=${INSTALL_BASE_DIR}/bin
 
 # Setting library search paths.
 libsearchpath=""
@@ -990,73 +1079,25 @@ commonpaths="/usr/local/lib
 /usr/lib
 /usr/lib64
 /lib
-/lib64
-$customsearchpath" # these paths are proposed by POSIX
+/lib64 
+$customsearchpath" # ^ these paths are proposed by POSIX
 for path in $commonpaths; do
-  if [ -f $path ]; then # only add them if they exist
+  if [ -d $path ]; then # only add them if they exist
     libsearchpath="${libsearchpath}
     $path"
   fi
 done
 libsearchpath="${libsearchpath}
-            ${INSTALL_BASE_DIR}" # concatenate
+            ${INSTALL_LIB_DIR}" # concatenate
 
-mkdir -p ${INSTALL_BASE_DIR}/lib
-mkdir -p ${INSTALL_BASE_DIR}/include
-mkdir -p ${INSTALL_BASE_DIR}/bin
-INSTALL_LIB_DIR=${INSTALL_BASE_DIR}/lib
-INSTALL_INC_DIR=${INSTALL_BASE_DIR}/include
-INSTALL_BIN_DIR=${INSTALL_BASE_DIR}/bin
+incsearchpath="/usr/include
+            $INSTALL_INC_DIR/CombBLAS
+            $INSTALL_INC_DIR"
 
 # == SETUP ==
 # = Set time + date. =
 info "Started $(date)"
 TIC=$(date +%s)
-
-# == CHOOSE WHICH TARGETS TO BUILD ==
-# Add a new target also here.
-while [ $# != 0 ]; do
-  targets=$1
-  if [[ "$target" -eq "all" ]]; then
-    targets="$TARGETS"
-  fi
-  for target in ${targets[@]}
-    case $target in
-      "mpi") build_mpi;;
-      "blas") build_blas;;
-      "lapack") build_lapack;;
-      "blacs") build_blacs;;
-      "scalapack") build_scalapack;;
-      "amd") build_amd;;
-      "camd") build_amd;; # is included in amd
-      "ccolamd") build_ccolamd;;
-      "combblas") build_combblas;;
-      "colamd") build_colamd;;
-      "metis") build_metis;;
-      "scotch") build_scotch;;
-      "cholmod") build_cholmod;;
-      "mumps") build_mumps;;
-      "umfpack") build_umfpack;;
-      "pardiso") build_pardiso;;
-      "wsmp") build_wsmp;;
-      "taucs")
-        build_cilk
-        build_cblas
-        build_taucs
-        ;;
-      "superlu") build_superlu;;
-      "bebop") build_bebop;;
-      "matio") build_matio;;
-      "superlu_dist") build_superlu_dist;;
-      "openblas") build_openblas;;
-      "cblas") build_cblas;;
-      "cilk") build_cilk;;
-      "clean") echo "cleaning..." && rm -rf ${TARGETS} && exit 0;;
-      "distclean") echo "cleaning..." && rm -rf ${TARGETS} && rm -rf ${INSTALL_BASE_DIR} && exit 0;;
-      *) help && echo "ERROR: options - unrecognized target or option "$1"";;
-    esac
-  shift;
-done
 
 # == Determine parallel make capacity. ==
 if [[ -n ${PARALLEL_MAKE_DISABLED} ]]; then
@@ -1068,6 +1109,76 @@ else
   let NCPU_P1=${NCPU}+1
   MAKE="make -j${NCPU_P1}"
 fi
+
+# == CHOOSE WHICH TARGETS TO BUILD ==
+# Add a new target also here.
+while [ $# != 0 ]; do
+  targets=$1
+  # recognize target "all"
+  if [[ "$target" = "all" ]]; then
+    targets="$TARGETS"
+  fi
+  for target in ${targets[@]}; do
+    case $target in
+      "mpi") 
+        build_mpi
+        ;;
+      "blas") 
+        build_blas
+        ;;
+      "lapack") 
+        build_lapack
+        ;;
+      "blacs") 
+        build_blacs
+        ;;
+      "scalapack") 
+        build_scalapack
+        ;;
+      "amd") 
+        build_amd
+        ;;
+      "camd") build_amd;; # is included in amd
+      "ccolamd") build_ccolamd;;
+      "combblas") build_combblas;;
+      "colamd") build_colamd;;
+      "metis") build_metis;;
+      "scotch") build_scotch;;
+      "cholmod") 
+        build_metis
+        build_cholmod
+        ;;
+      "mumps") build_mumps;;
+      "umfpack") build_umfpack;;
+      "pardiso") build_pardiso;;
+      "wsmp") build_wsmp;;
+      "taucs")
+        build_cilk
+        build_cblas
+        build_taucs
+        ;;
+      "superlu") 
+        build_combblas
+        build_superlu
+        ;;
+      "bebop") build_bebop;;
+      "matio") build_matio;;
+      "superlu_dist") build_superlu_dist;;
+      "openblas") build_openblas;;
+      "cblas") build_cblas;;
+      "cilk") build_cilk;;
+      "clean") echo "cleaning..." && rm -rf ${TARGETS} && exit 0;;
+      "distclean") 
+        echo "cleaning..." && rm -rf ${TARGETS} && rm -rf ${INSTALL_BASE_DIR} && exit 0
+        ;;
+      *) 
+        help && echo "ERROR: options - unrecognized target or option $target"
+        ;;
+    esac
+  done
+  shift;
+done
+
 
 # make install lib dir
 #sleep 2
