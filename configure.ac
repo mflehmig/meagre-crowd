@@ -19,6 +19,14 @@
 #                                               -*- Autoconf -*-
 # Process this file with autoconf to produce a configure script.
 
+#CFLAGS_backup="${CFLAGS}"
+#LDFLAGS_backup="${LDFLAGS}"
+#CFLAGS="-I/home/thomas/Code/meagre-crowd.git/x86_64-linux-gnu/include ${CFLAGS}"
+#CPPFLAGS="-I/home/thomas/Code/meagre-crowd.git/x86_64-linux-gnu/include ${CPPFLAGS}"
+#LDFLAGS="-L/home/thomas/Code/meagre-crowd.git/x86_64-linux-gnu/lib/ ${LDFLAGS}"
+
+
+
 AC_PREREQ([2.69])
 AC_INIT([meagre-crowd],[0.4.6],[<meagre-crowd@googlegroups.com>])
 
@@ -40,7 +48,7 @@ CFLAGS="-std=c99 $CFLAGS"
 # debugging
 
 AC_MSG_CHECKING(whether to enable debugging)
-default="no"
+default="yes"
 DEBUG=
 AC_ARG_ENABLE(debug, [  --enable-debug=[no/yes] turn on debugging
                        [default=$default]],, enable_debug=$default)
@@ -88,8 +96,8 @@ dnl AM_PROG_CC_C_O
 
 # BeBOP: matrix market file format
 AC_SEARCH_LIBS([load_sparse_matrix], [sparse_matrix_converter],,AC_MSG_ERROR([missing BeBOP sparse matrix I/O library]))
- #  BeBOP: some OSes don't see bebop_util.so properly even though its marked as a dependency of sparse_matrix_converter.so
- AC_SEARCH_LIBS([bebop_default_initialize], [bebop_util],,AC_MSG_ERROR([missing BeBOP utils]))
+# BeBOP: some OSes don't see bebop_util.so properly even though it's marked as a dependency of sparse_matrix_converter.so
+AC_SEARCH_LIBS([bebop_default_initialize], [bebop_util],,AC_MSG_ERROR([missing BeBOP utils]))
 
 # MATio: matlab matrix I/O library
 AC_ARG_WITH(mat,

@@ -16,12 +16,17 @@ Invoke with bash
 
   bash get_dependencies.sh
 
-to list all possible options. Decide which solvers to install (mumps, umfpack, pardiso, wsmp, superlu), as you probably don't need all of them. Install the dependencies needed by your solvers. A proper dependency system via Gentoo, Ubuntu, or RedHat should be able to provide most of the dependencies. A list on needed dependencies for each solver does not exist as part of this project yet.
+to list all possible options. Decide which solvers to install (mumps, umfpack, pardiso, wsmp, superlu), as you probably don't need all of them. Install the dependencies needed by your solvers. A proper dependency system via Gentoo, Ubuntu, or RedHat should be able to provide most of the dependencies.
+You can find a list of needed dependencies for each solver in solvers_dependencis.csv.
 
-If you have all needed dependencies for meagre-crowd already installed, make sure to set the paths, which are usually set in get_dependencies.sh.
+If you have all needed dependencies for meagre-crowd already installed, make sure to set the paths. Get_dependencies installs all programs in the base directory of meagre-crowd in a folder called just as the system you're working on (<machine>).
+
+  export LDFLAGS=${LDFLAGS}:-L<path-to-mc-base-dir>/<machine>/include/
+  export CFLAGS=${CFLAGS}:-I<path-to-mc-base-dir>/<machine>/lib
 
 Run the following commands to compile this program
-
+  
+  autoreconf -fi
   ./configure
   make
   make install

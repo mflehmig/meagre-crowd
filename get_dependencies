@@ -55,7 +55,7 @@ AMD_VER="2.2.1"
 CAMD_VER="5.1.2-2"
 CCOLAMD_VER="5.1.2-2" # required by CHOLMOD
 COLAMD_VER="5.1.2-2"
-#  UFPACK_VER=3.5.0
+#  UFPACK_VER="3.5.0"
 PARMETIS_VER="4.0.3-5"
 METIS_VER="5.1.0.dfsg-5"
 SCOTCH_VER="6.0"
@@ -64,8 +64,8 @@ CHOLMOD_VER="5.1.2-2" # can use Metis-4
 # = Solvers =
 # MUMPS_VER=4.9.2 # the solver, not the scripting language
 UMFPACK_VER="5.1.2-2"
-TAUCS_VER=2.2
-#SUPERLU_VER=2.5
+TAUCS_VER="2.2"
+SUPERLU_VER="5.2.1"
 COMBBLAS_VER="16.2"
 SUPERLU_DIST_VERSION="6.1.0"
 #PARDISO_VER=""
@@ -164,7 +164,6 @@ function find_library() {
   if [[ "$libname" = "combblas" ]]; then find_library CombBLAS; fi
   
   if [ "$libfound_err" -eq "1" ]; then info "  lib$libname not found"; fi  
-  if [ "$libfound_err" -eq "0" ]; then info "  lib$libname found"; fi
 } # /find_library
 
 # == find_header == This function looks for a header ($1) in previously set search paths.
@@ -185,7 +184,6 @@ function find_header() {
     if [[ "$incname" = "combblas" ]]; then find_header CombBLAS; fi
 
     if [ "$incfound_err" -eq "1" ]; then info "  $incname.h not found"; fi
-    if [ "$incfound_err" -eq "0" ]; then info "  $incname.h found"; fi
   done
 }
 
@@ -887,20 +885,8 @@ EOF
 function build_superlu() {
   # get superlu
   info "SuperLU"
-  get_and_unpack superlu http://crd.lbl.gov/~xiaoye/SuperLU/superlu_${SUPERLU_VER}.tar.gz
-  cd ${S}/superlu/SuperLU${SUPERLU_VER}
-  cp MAKE_INC/make.xt4 ./make.inc
-  sed -i "s/\(^PLAT.*=\).*/\1 ${MACHINE}/" make.inc
-  sed -i "s/\(^DSuperLUroot.*=\).*/\1 ${INSTALL_BASE_DIR//\//\\/}/" make.inc
-  sed -i "s/\(^BLASDEF.*=\).*/\1 -DUSE_VENDOR_BLAS/" make.inc
-  sed -i "s/\(^BLASLIB.*=\).*/\1  ${BLAS_DLIB//\//\\/}/" make.inc
-  sed -i "s/\(^METISLIB.*=\).*/\1 ${METIS_DLIB//\//\\/}/" make.inc
-  sed -i "s/\(^PARMETISLIB.*=\).*/\1 ${METIS_DLIB//\//\\/}/" make.inc
-  sed -i "s/\(^FLIBS.*=\).*/\1/" make.inc
-  sed -i "s/\(^ARCH.*=\).*/\1 ar/" make.inc
-  sed -i "s/\(^ARCHFLAGS.*=\).*/\1 cr/" make.inc
-  sed -i "s/\(^RANLIB.*=\).*/\1 ranlib/" make.inc
-  sed -i "s/\(^CC.*=\).*/\1 ${MPICC//\//\\/}/"  make.inc
+  get_and_unpack superlu https://crd-legacy.lbl.gov/~xiaoye/SuperLU/superlu_${SUPERLU_VER}.tar.gz
+  cd ${S}/superlu/SuperLU_${SUPERLU_VER}
   #   The following CPP definitions can be set in CFLAGS.
   #      * -D_LONGINT
   #        use 64-bit integers for indexing sparse matrices. (default is 32 bit)
@@ -908,28 +894,28 @@ function build_superlu() {
   #        printing level to show solver's execution details. (default is 0)
   #      * -DDEBUGlevel=[0,1,2,...]
   #        diagnostic printing level for debugging purpose. (default is 0)
-  sed -i "s/\(^CFLAGS *=\).*/\1 -pipe -O2 -fPIC/"  make.inc
-  sed -i "s/\(^NOOPTS.*=\).*/\1 -fPIC/"  make.inc
-  sed -i "s/\(^FORTRAN.*=\).*/\1 ${MPIF77//\//\\/}/" make.inc
   # rename wrong variable F90FLAGS -> FFLAGS (FFLAGS is used in the actual makefiles...)
-  sed -i "s/\(^F90FLAGS.*=\).*/FFLAGS = -fPIC/"  make.inc
-  sed -i "s/\(^LOADER.*=\).*/\1 ${MPIF77//\//\\/}/" make.inc
-  sed -i "s/\(^LOADOPTS.*=\).*/\1 -fPIC/"  make.inc
+  #sed -i "s/\(^F90FLAGS.*=\).*/FFLAGS = -fPIC/"  make.inc
+  #sed -i "s/\(^LOADER.*=\).*/\1 ${MPIF77//\//\\/}/" make.inc
+  #sed -i "s/\(^LOADOPTS.*=\).*/\1 -fPIC/"  make.inc
   #   The possible options for CDEFS are:
   #     * -DAdd_: Fortran expects a C routine to have an underscore
   #               postfixed to the name;
   #     * -DNoChange: Fortran expects a C routine name to be identical to
   #                   that compiled by C;
   #     * -DUpCase: Fortran expects a C routine name to be all uppercase.
-  sed -i "s/\(^CDEFS.*=\).*/\1 -DAdd__/"  make.inc
-  # d: double precision real (default), c: complex double, s: single precision real, z: single precision complex
-  info "  build"
+  #sed -i "s/\(^CDEFS.*=\).*/\1 -DAdd__/"  make.inc
+  # d: double precision real (default), c: complex double, s: single precision real, z: single precision complex'
+  info "  configure .."
+  mkdir build; cd build
+  cmake ..
+  info "  build .."
   ${MAKE} &> /dev/null || err superlu "build failed"
-  info "  install"
-  a2so ${INSTALL_LIB_DIR}/libsuperlu_dist_${SUPERLU_VER}.a -L${INSTALL_LIB_DIR} ${METIS_DLIB} ${BLAS_DLIB}
-  cd ${INSTALL_LIB_DIR} && ln -sf libsuperlu_dist_${SUPERLU_VER}.so libsuperlu_dist.so
-  chmod -x ${S}/superlu/SuperLU_DIST_${SUPERLU_VER}/SRC/*.h
-  cp ${S}/superlu/SuperLU_DIST_${SUPERLU_VER}/SRC/*.h ${INSTALL_INC_DIR}/
+  info "  install .."
+  #a2so ${INSTALL_LIB_DIR}/libsuperlu_dist_${SUPERLU_VER}.a -L${INSTALL_LIB_DIR} ${METIS_DLIB} ${BLAS_DLIB}
+  cd ${INSTALL_LIB_DIR} && ln -sf libsuperlu_${SUPERLU_VER}.a libsuperlu.a
+  chmod -x ${S}/superlu/SuperLU_${SUPERLU_VER}/SRC/*.h
+  cp ${S}/superlu/SuperLU_${SUPERLU_VER}/SRC/*.h ${INSTALL_INC_DIR}/
 } # /build_superlu
 
 # = build_superlu_dist =
@@ -981,9 +967,13 @@ function build_superlu_dist() {
     -DCMAKE_VERBOSE_MAKEFILE:BOOL=ON \
     -DCMAKE_INSTALL_PREFIX=${INSTALL_BASE_DIR} \
     -DCMAKE_EXE_LINKER_FLAGS="-lmetis" &> /dev/null || err superlu_dist "configuring failed"
-  echo "  building .."
+  info "  building .."
   make &> /dev/null || err superlu_dist "build failed"
-  echo "  installing .." # TODO
+#  make VERBOSE=1
+  info "  installing .." # TODO
+  cp $superlu_dist_root/_build/SRC/*.h $INSTALL_INC_DIR
+  cp $superlu_dist_root/_build/SRC/*.a $INSTALL_LIB_DIR
+
 } # /build_superlu_dist
 
 # == I/O BUILD FUNCTIONS ==
@@ -1173,7 +1163,6 @@ while [ $# != 0 ]; do
         build_taucs
         ;;
       "superlu") 
-        build_combblas
         build_superlu
         ;;
       "bebop") build_bebop;;
