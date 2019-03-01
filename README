@@ -26,7 +26,7 @@ If you have all needed dependencies for meagre-crowd already installed, make sur
 
 Run the following commands to compile this program
   
-  autoreconf -fi
+  autoreconf -fi (optional: --add-missing)
   ./configure
   make
   make install

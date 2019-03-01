@@ -1,7 +1,7 @@
 #! /bin/bash
 
 # === USAGE ===
-# This script downloads, unpacks and installs a number of targets. Meagre-crowd
+# This script downloads, unpacks and installs a number of targets. Meagre-crowd (optionally)
 # depends on them, and the targets might depend on each other. See solvers_dependencies.csv
 # for a full list of a solver's dependencies.
 # Usage: Before invoking
@@ -9,7 +9,17 @@
 # adapt the variables below to your custom.
 #
 # Script won't install a target if a directory with the name of <target> already exists 
-# in the base directory (= the directory you found this script in).
+# in the base directory (= the directory you found this script in). 
+#
+# How to go about how to invoke this script:
+# 1. choose the solvers you want to use with meagre-crowd
+# 2. check which dependencies you need in solvers_dependencies.csv
+# 3. decide which dependencies you want to install locally (with this script) and 
+#    for which the system install is ok
+# 4. you always have to install bebop and matio
+# 5. adapt the variables (versions) below
+# 6. invoke 'bash get_dependencies matio bebop <your target for local inst 1> <target2>
+# This script will always favor local installs as deps over system installs.
 
 # === CHANGE THESE VARIABLES ===
 
@@ -18,9 +28,11 @@ PARALLEL_MAKE_DISABLED="yes" # force make to use a single core for compiling
 #PARALLEL_MAKE_DISABLED="no" # please choose one!
 
 # == custom lib search path ==
-# This script looks in common paths for a dependency. If it can't find your install, set this.
+# This script looks in common paths for a dependency. If it can't find your 
+# (probably manual?) install, set this.
 # customsearchpath="<path1>
 #          <path2"
+customsearchpath=""
 
 # == Select implementations. == 
 # These variables are then used to choose a build. You can only build the libs that
@@ -43,7 +55,7 @@ METIS="metis" # parmetis or metis -- metis is required by cholmod
 #MPICH1_MPI_VER="1.2.7p1"
 OPENMPI_VER="2.1.1-8"
 CILK_VER="7.3.0-27"
-#ATLAS_BLAS_VER=3.8.3 # latest stable
+ATLAS_BLAS_VER=3.8.3 # latest stable
 COMBBLAS_VERSION="beta_16_2"
 OPENBLAS_VERSION="0.2.20+ds-4"
 LAPACK_VER="3.7.1-4ubuntu1"
@@ -62,13 +74,13 @@ SCOTCH_VER="6.0"
 CHOLMOD_VER="5.1.2-2" # can use Metis-4
 
 # = Solvers =
-# MUMPS_VER=4.9.2 # the solver, not the scripting language
+MUMPS_VER=4.9.2 # the solver, not the scripting language
 UMFPACK_VER="5.1.2-2"
 TAUCS_VER="2.2"
 SUPERLU_VER="5.2.1"
 COMBBLAS_VER="16.2"
 SUPERLU_DIST_VERSION="6.1.0"
-#PARDISO_VER=""
+PARDISO_VER=""
 
 # === !!UNLESS YOU WANT TO EDIT THE SCRIPT, DON'T CHANGE ANYTHING BELOW!! ===
 #
@@ -85,16 +97,16 @@ SUPERLU_DIST_VERSION="6.1.0"
 # * Build functions (functions that build libs/tools) x
 #    * Toolkit build functions (x)
 #    * Orderings build functions (x)
-#    * I/O tools build functions (x)
+#    * I/O tools build functions (x - depending on the kind of software you add)
 # * Main x
 #
 # The headings work like this: 
 # === first level
 # ==  second level
 # =   third level
-# Upper or lower case headings don't have a meaning.
+# Upper or lower case headings don't have a meaning, that's historically developed.
 #
-# As functions are very long, the end with } # /<functionname>
+# As functions are very long, the end with "} # /<functionname>".
 
 # === FUNCTION DECLARATIONS ===
 # == help ==
@@ -381,8 +393,6 @@ function build_blas() {
   esac
 
 # find blas install dir
-# TODO prefer local install 
-find_library openblas
 find_library blas
 BLAS_PATH=$libpath
 BLAS_DLIB="-L${BLAS_PATH} -lblas"
@@ -393,7 +403,7 @@ BLAS_DLIB="-L${BLAS_PATH} -lblas"
 #  BLAS_DLIB="${BLAS_DLIB} -lopenblas"
 #  info "  using ${BLAS_PATH}/libopenblas.so"
 #fi
-}
+} # /build_blas
 
 # = build_lapack =
 function build_lapack() {
@@ -499,15 +509,15 @@ function build_combblas() {
   info "  building .."
   make &> /dev/null || err combblas "build failed"
   info "  installing .."
-  make install
-  cp ${S}/combblas/CombBLAS_${COMBBLAS_VERSION}/_install/lib/*.a ${INSTALL_LIB_DIR}
-  cp -r ${S}/combblas/CombBLAS_${COMBBLAS_VERSION}/_install/include/* ${INSTALL_INC_DIR}
+  make install &> /dev/null || err combblas "install failed"
+  cp -f ${S}/combblas/CombBLAS_${COMBBLAS_VERSION}/_install/lib/*.a ${INSTALL_LIB_DIR} &> /dev/null || err combblas "install failed"
+  cp -rf ${S}/combblas/CombBLAS_${COMBBLAS_VERSION}/_install/include/* ${INSTALL_INC_DIR} &> /dev/null || err combblas "install failed"
   # fix some paths for SuperLU
-  mv ${INSTALL_INC_DIR}/psort ${INSTALL_INC_DIR}/CombBLAS
-  mv ${INSTALL_INC_DIR}/usort ${INSTALL_INC_DIR}/CombBLAS
-  mv ${INSTALL_INC_DIR}/Tommy ${INSTALL_INC_DIR}/CombBLAS
-  mv ${INSTALL_INC_DIR}/graph500 ${INSTALL_INC_DIR}/CombBLAS
-  mv $S/combblas/CombBLAS_${COMBBLAS_VERSION}/BipartiteMatchings ${INSTALL_INC_DIR}/CombBLAS
+  mv -f ${INSTALL_INC_DIR}/psort ${INSTALL_INC_DIR}/CombBLAS &> /dev/null || err combblas "install failed"
+  mv -f ${INSTALL_INC_DIR}/usort ${INSTALL_INC_DIR}/CombBLAS &> /dev/null || err combblas "install failed"
+  mv -f ${INSTALL_INC_DIR}/Tommy ${INSTALL_INC_DIR}/CombBLAS &> /dev/null || err combblas "install failed"
+  mv -f ${INSTALL_INC_DIR}/graph500 ${INSTALL_INC_DIR}/CombBLAS &> /dev/null || err combblas "install failed"
+  mv -f $S/combblas/CombBLAS_${COMBBLAS_VERSION}/BipartiteMatchings ${INSTALL_INC_DIR}/CombBLAS &> /dev/null || err combblas "install failed"
 } # /build_combblas
 
 # == ORDERINGS BUILD FUNCTIONS ==
@@ -1001,11 +1011,9 @@ function build_bebop() {
   info "  build sparse matrix converter"
   make &> /dev/null || err bebop "sparse matrix converter build failed"
   info "  install"
-  cd ${S}/bebop
-  for i in bebop_util sparse_matrix_converter; do
-    cp ${S}/bebop/${i}/lib${i}.so ${INSTALL_LIB_DIR}/
-    cp ${S}/bebop/${i}/lib${i}.a  ${INSTALL_LIB_DIR}/
-  done
+  cd ${S}/bebop/bebop_util
+  cp -f libbebop_util.a ${INSTALL_LIB_DIR}
+  cp -f libbebop_util.so ${INSTALL_LIB_DIR}
   cp ${S}/bebop/sparse_matrix_converter/sparse_matrix_converter ${INSTALL_BIN_DIR}/
   mkdir -p ${INSTALL_INC_DIR}/bebop/util
   mkdir -p ${INSTALL_INC_DIR}/bebop/smc
@@ -1027,7 +1035,7 @@ function build_matio() {
   git clone https://github.com/tbeu/matio.git &> /dev/null
   cd ${S}/matio
   info "  configuring ..."
-  # wow: software that has been properly packaged!
+  # wow: software that has been properly packaged! what are you talking about?
   # ./bootstrap || err matio "during executing bootstrap" # and what is this
   sh autogen.sh &> /dev/null || err matio "autogen"
   ./configure --prefix="${INSTALL_BASE_DIR}" --disable-static &> /dev/null || err matio "configure"
@@ -1036,24 +1044,25 @@ function build_matio() {
   # info "testing software ..."
   # make check &> /dev/null || err matio "check test failed"
   info "  installing ..."
-  #make install &> /dev/null || err matio "make install" #TODO make the install local
-  ##### INSTALL ########
-  cd /home/thomas/Code/meagre-crowd.git/matio/src
-  bash ../libtool --mode=install install -c libmatio.la '${INSTALL_LIB_DIR}'
-  install -c .libs/libmatio.so.4.4.2 ${INSTALL_LIB_DIR}/libmatio.so.4.4.2
-  install -c -m 644 matio.h '${INSTALL_INC_DIR}'
-  install -c -m 644 matio_pubconf.h '${INSTALL_INC_DIR}'
-  mkdir -p '${INSTALL_BASE_DIR}/bin'
-  bash ../libtool --mode=install install -c matdump '${INSTALL_BASE_DIR}/bin'
-  mkdir -p '${INSTALL_BASE_DIR}/share/man/man3'
-  install -c -m 644 Mat_Close.3 Mat_CreateVer.3 Mat_GetDir.3 Mat_GetFilename.3 Mat_GetLibraryVersion.3 Mat_GetVersion.3 Mat_Open.3 Mat_Rewind.3 Mat_VarAddStructField.3 Mat_VarCreate.3 Mat_VarCreateStruct.3 Mat_VarDelete.3 Mat_VarFree.3 Mat_VarGetNumberOfFields.3 Mat_VarGetSize.3 Mat_VarGetStructFieldnames.3 Mat_VarGetStructs.3 Mat_VarGetStructsLinear.3 Mat_VarRead.3 Mat_VarReadInfo.3 Mat_VarReadNext.3 Mat_VarReadNextInfo.3 Mat_VarPrint.3 Mat_VarWrite.3 Mat_VarWriteAppend.3 '${INSTALL_BASE_DIR}/share/man/man3'
-  mkdir -p '${INSTALL_LIB_DIR}/pkgconfig'
-  install -c -m 644 matio.pc '${INSTALL_LIB_DIR}/pkgconfig'
-} # /bebop
+  cd ${S}/matio/src 
+  # don't quote paths with '...' 
+  bash ../libtool --mode=install install -c libmatio.la ${INSTALL_LIB_DIR} &> /dev/null || err matio "installing libmatio.la"
+  install -c .libs/libmatio.so.4.4.2 ${INSTALL_LIB_DIR}/libmatio.so.4.4.2  &> /dev/null || err matio "install libmatio.so"
+  install -c -m 644 matio.h ${INSTALL_INC_DIR}  &> /dev/null || err matio "installing matio.h"
+  install -c -m 644 matio_pubconf.h ${INSTALL_INC_DIR}  &> /dev/null || err matio "installing matio_pubconf.h"
+  mkdir -p ${INSTALL_BIN_DIR}  &> /dev/null || err matio "installing - can't make dir"
+#  bash ../libtool --mode=install install -c matdump ${INSTALL_BIN_DIR} || err matio "install" # TODO
+  cd ${S}/matio/documentation
+  mkdir -p ${INSTALL_BASE_DIR}/share/man/man3  &> /dev/null || err matio "can't make dir"
+  install -c -m 644 Mat_Close.3 Mat_CreateVer.3 Mat_GetDir.3 Mat_GetFilename.3 Mat_GetLibraryVersion.3 Mat_GetVersion.3 Mat_Open.3 Mat_Rewind.3 Mat_VarAddStructField.3 Mat_VarCreate.3 Mat_VarCreateStruct.3 Mat_VarDelete.3 Mat_VarFree.3 Mat_VarGetNumberOfFields.3 Mat_VarGetSize.3 Mat_VarGetStructFieldnames.3 Mat_VarGetStructs.3 Mat_VarGetStructsLinear.3 Mat_VarRead.3 Mat_VarReadInfo.3 Mat_VarReadNext.3 Mat_VarReadNextInfo.3 Mat_VarPrint.3 Mat_VarWrite.3 Mat_VarWriteAppend.3 ${INSTALL_BASE_DIR}/share/man/man3  &> /dev/null || err matio "installing"
+  cd ${S}/matio
+  mkdir -p ${INSTALL_LIB_DIR}/pkgconfig  &> /dev/null || err matio "can't make dir"
+  install -c -m 644 matio.pc ${INSTALL_LIB_DIR}/pkgconfig  &> /dev/null || err matio "installing pkgconfig"
+} # /matio
 
 
 ########################################################################
-# === MAIN === (if this was C, all of below would be main)
+# === MAIN === (if this was C, all of below would be main [sadly, it isn't C])
 # == DISPLAY THE HELP TEXT == if the script was invoked without options
 [ $# -eq 0 ] && help && exit 2
 
@@ -1066,13 +1075,12 @@ TARGETS="mpi blas lapack blacs scalapack amd camd ccolamd colamd metis scotch ch
 S=${PWD}
 MACHINE=$(gcc -dumpmachine)
 INSTALL_BASE_DIR=${PWD}/${MACHINE}
-
-mkdir -p ${INSTALL_BASE_DIR}/lib
-mkdir -p ${INSTALL_BASE_DIR}/include
-mkdir -p ${INSTALL_BASE_DIR}/bin
 INSTALL_LIB_DIR=${INSTALL_BASE_DIR}/lib
 INSTALL_INC_DIR=${INSTALL_BASE_DIR}/include
 INSTALL_BIN_DIR=${INSTALL_BASE_DIR}/bin
+mkdir -p ${INSTALL_LIB_DIR} # -p makes parent dirs
+mkdir -p ${INSTALL_INC_DIR}
+mkdir -p ${INSTALL_BIN_DIR}
 
 # Setting library search paths.
 libsearchpath=""
@@ -1100,19 +1108,19 @@ libsearchpath="${libsearchpath}
 
 incsearchpath="/usr/include
             $INSTALL_INC_DIR/CombBLAS
-            $INSTALL_INC_DIR"
+            $INSTALL_INC_DIR" # the CombBLAS dir is just needed because SuperLU is funny
 
 # == SETUP ==
 # = Set time + date. =
 info "Started $(date)"
 TIC=$(date +%s)
 
-# == Determine parallel make capacity. ==
-if [[ -n ${PARALLEL_MAKE_DISABLED} ]]; then
+# == Determine parallel make capacity. == # TODO evidently, parallel make doesn't work
+if [[ ${PARALLEL_MAKE_DISABLED} -eq "yes" ]]; then
   info "Parallel make disabled"
   MAKE="make"
-else
-  NCPU=$(grep "cpu cores" /proc/cpuinfo  |head -1 | cut -d ' ' -f 3)
+elif [[ ${PARALLEL_MAKE_DISABLED} -eq "no" ]]; then
+  NCPU=$(grep "cpu cores" /proc/cpuinfo  | head -1 | cut -d ' ' -f 3)
   info "Detected ${NCPU} cores for compile."
   let NCPU_P1=${NCPU}+1
   MAKE="make -j${NCPU_P1}"
@@ -1160,8 +1168,6 @@ while [ $# != 0 ]; do
       "pardiso") build_pardiso;;
       "wsmp") build_wsmp;;
       "taucs")
-        build_cilk
-        build_cblas
         build_taucs
         ;;
       "superlu") 
@@ -1188,7 +1194,6 @@ done
 
 # make install lib dir
 #sleep 2
-touch ${INSTALL_LIB_DIR}
 
 TOC=$(date +%s)
 let DELTA=${TOC}-${TIC}
