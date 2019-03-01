@@ -32,7 +32,7 @@ MPI="" # mpich2/mpich1/openmpi or local or skip
 BLAS="" # netlib/atlas/local
 CBLAS=""
 LAPACK="" # netlib or local
-METIS="" # parmetis or metis -- metis is required by cholmod
+METIS="metis" # parmetis or metis -- metis is required by cholmod
 
 # == Select Versions to download. ==
 # These variables are then used to match
@@ -57,7 +57,7 @@ CCOLAMD_VER="5.1.2-2" # required by CHOLMOD
 COLAMD_VER="5.1.2-2"
 #  UFPACK_VER="3.5.0"
 PARMETIS_VER="4.0.3-5"
-METIS_VER="5.1.0.dfsg-5"
+METIS_VER="5.1.0"
 SCOTCH_VER="6.0"
 CHOLMOD_VER="5.1.2-2" # can use Metis-4
 
@@ -660,34 +660,37 @@ info "  using $libpath/libptscotch.so"
 
 # === BUILD SOLVERS ===
 # = build_cholmod =
-function build_umfpack() {
+function build_cholmod() {
+
   info "CHOLMOD"
+  
+  # unpack archives
   get_and_unpack cholmod http://www.cise.ufl.edu/research/sparse/cholmod/CHOLMOD-${CHOLMOD_VER}.tar.gz
   get_and_unpack cholmod http://www.cise.ufl.edu/research/sparse/UFconfig/UFconfig-${UFPACK_VER}.tar.gz
-  info "  contains metis-${METIS_VER} (can't untangle: CHOLMOD wants internals)"
-  get_and_unpack cholmod http://glaros.dtc.umn.edu/gkhome/fetch/sw/metis/metis-${METIS_VER}.tar.gz
+
   info "  config"
-  cd ${S}/cholmod/metis-${METIS_VER}
-  # for some reason metis redefines log2_local -- its in glibc
-  #sed -i "s/log2_local\([^_]\)/log2_local\1/g" $(grep -lr log2_local .)
-  #sed -i "s/log2_local\$/log2_local/g" $(grep -lr log2_local .)
+
+  # cholmod needs metis 
+  find_library metis
+  metis_libpath=$libpath
+
   cd ${S}/cholmod; mkdir -p AMD; cd AMD; ln -s ${INSTALL_INC_DIR} Include
   cd ${S}/cholmod; mkdir -p COLAMD; cd COLAMD; ln -s ${INSTALL_INC_DIR} Include
   cd ${S}/cholmod; mkdir -p CCOLAMD; cd CCOLAMD; ln -s ${INSTALL_INC_DIR} Include
   cd ${S}/cholmod; mkdir -p CAMD; cd CAMD; ln -s ${INSTALL_INC_DIR} Include
   cd ${S}/cholmod/CHOLMOD || err cholmod "bad dir"
   echo "CFLAGS = -O3 -fexceptions -fPIC" >> ../UFconfig/UFconfig.mk
-  sed -i "s/\(METIS_PATH =\).*/\1 ..\/..\/metis-$METIS_VER/" ../UFconfig/UFconfig.mk
-  sed -i "s/\(METIS =\).*/\1 \$(METIS_PATH)\/libmetis.a/" ../UFconfig/UFconfig.mk
+  sed -i "s/METIS_PATH =/METIS_PATH=$metis_libpath/libmetis.so/" ../UFconfig/UFconfig.mk
+  sed -i "s/METIS =/METIS=$metis_libpath/libmetis.so/" ../UFconfig/UFconfig.mk
   sed -i '/CC/d' ../UFconfig/UFconfig.mk
   info "  build"
   ${MAKE} library &> /dev/null || err cholmod "build failed"
   cp Include/cholmod*.h ${INSTALL_INC_DIR}/
   cp Lib/libcholmod.a  ${INSTALL_LIB_DIR}/
   a2so ${INSTALL_LIB_DIR}/libcholmod.a ${AMD_DLIB} ${CAMD_DLIB} ${METIS_DLIB} ${BLAS_DLIB} ${CCOLAMD_DLIB} ${COLAMD_DLIB} ${LAPACK_DLIB} -lm
-  find_library cholmod
-  CHOLMOD_DLIB="-L$libpath -lcholmod"
-  info "  using $libpath/libcholmod.so"
+#  find_library cholmod
+#  CHOLMOD_DLIB="-L$libpath -lcholmod"
+#  info "  using $libpath/libcholmod.so"
 } # /build_umfpack
 
 # = build_umfpack =
@@ -1150,7 +1153,6 @@ while [ $# != 0 ]; do
       "metis") build_metis;;
       "scotch") build_scotch;;
       "cholmod") 
-        build_metis
         build_cholmod
         ;;
       "mumps") build_mumps;;

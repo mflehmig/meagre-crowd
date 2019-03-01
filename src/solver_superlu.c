@@ -17,7 +17,7 @@
  *     along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include "solver_superlu_dist.h"
+#include "solver_superlu.h"
 #include "solvers.h"
 #include "matrix.h"
 #include "matrix_share.h"
@@ -30,22 +30,22 @@
 #include <stdint.h> // int64_t
 #include <unistd.h> // dup -> redirect stdout temporarily
 
-#include <mpi.h>
+//#include <mpi.h> // superlu shouldn't need this
 #include <math.h>
 
 typedef struct {
-  superlu_dist_options_t options;
+  superlu_options_t options;
   gridinfo_t grid;
   int active; // is this node active in the superlu grid?
   int rank0; // who is the old rank0 in the new communicator
   SuperMatrix A;
   ScalePermstruct_t scale_permute;
   LUstruct_t lu;
-} solve_system_superlu_dist_t;
+} solve_system_superlu_t;
 
-void solver_init_superlu_dist( solver_state_t* s ) {
+void solver_init_superlu( solver_state_t* s ) {
   assert( s != NULL );
-  solve_system_superlu_dist_t * const p = calloc( 1, sizeof( solve_system_superlu_dist_t ) );
+  solve_system_superlu_t * const p = calloc( 1, sizeof( solve_system_superlu_dist_t ) );
   assert( p != NULL );
   s->specific = p;
 
@@ -83,9 +83,9 @@ void solver_init_superlu_dist( solver_state_t* s ) {
 }
 
 // TODO split analyze stage into ordering and symbolic factorization stages?
-void solver_analyze_superlu_dist( solver_state_t* s, matrix_t* A ) {
+void solver_analyze_superlu( solver_state_t* s, matrix_t* A ) {
   assert( s != NULL );
-  solve_system_superlu_dist_t* const p = s->specific;
+  solve_system_superlu_t* const p = s->specific;
   assert( p != NULL );
   if( !p->active ) // check if this grid node is active
     return;
@@ -114,13 +114,13 @@ void solver_analyze_superlu_dist( solver_state_t* s, matrix_t* A ) {
   // TODO analyze
 }
 
-void solver_factorize_superlu_dist( solver_state_t* s, matrix_t* A ) {
+void solver_factorize_superlu( solver_state_t* s, matrix_t* A ) {
   // TODO factorize
 }
 
-void solver_evaluate_superlu_dist( solver_state_t* s, matrix_t* b, matrix_t* x ) {
+void solver_evaluate_superlu( solver_state_t* s, matrix_t* b, matrix_t* x ) {
   assert( s != NULL );
-  solve_system_superlu_dist_t* const p = s->specific;
+  solve_system_superlu_t* const p = s->specific;
   assert( p != NULL );
   if( !p->active ) // check if this grid node is active
     return;
@@ -131,7 +131,7 @@ void solver_evaluate_superlu_dist( solver_state_t* s, matrix_t* b, matrix_t* x )
   LUstructInit(/*p->A.nrow,*/ p->A.ncol, &(p->lu));
   PStatInit(&stat);
 
-  // setup for solver
+  // setup for solver TODO this is wrong for superlu!
   int ldb;
   int nrhs;
   if(s->mpi_rank == 0) {
@@ -202,18 +202,18 @@ void solver_evaluate_superlu_dist( solver_state_t* s, matrix_t* b, matrix_t* x )
   SUPERLU_FREE(berr);
 }
 
-void solver_finalize_superlu_dist( solver_state_t* s ) {
+void solver_finalize_superlu( solver_state_t* s ) {
   if ( s == NULL )
     return;
 
-  solve_system_superlu_dist_t* const p = s->specific;
+  solve_system_superlu_t* const p = s->specific;
 
   // release memory
   if ( p != NULL ) {
 
     // release the A matrix
     if( p->active )
-      Destroy_CompCol_Matrix_dist(&(p->A));
+      Destroy_CompCol_Matrix(&(p->A));
 
     // shutdown the MPI grid for superlu
     superlu_gridexit(&(p->grid));
@@ -225,7 +225,7 @@ void solver_finalize_superlu_dist( solver_state_t* s ) {
 colperm_t getSuperLUOrdering()
 {
   colperm_t ret = NATURAL;  // Default value.
-  printf("SuperLU_dist Ordering: ");
+  printf("SuperLU Ordering: ");
   const char* env_p = getenv("ORDERING");
   // if(const char* env_p = getenv("ORDERING")) {
   if (env_p != NULL)
