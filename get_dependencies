@@ -1017,9 +1017,9 @@ function build_bebop() {
   info "  build sparse matrix converter"
   make &> /dev/null || err bebop "sparse matrix converter build failed"
   info "  install"
-  cp ${S}/bebop/bebop_util/bebop_util.so ${INSTALL_LIB_DIR}
+  cp ${S}/bebop/bebop_util/libbebop_util.so ${INSTALL_LIB_DIR}
   cp ${S}/bebop/sparse_matrix_converter/sparse_matrix_converter ${INSTALL_BIN_DIR}/
-  cp ${S}/bebop/sparse_matrix_converter/sparse_matrix_converter.so ${INSTALL_LIB_DIR}/
+  cp ${S}/bebop/sparse_matrix_converter/libsparse_matrix_converter.so ${INSTALL_LIB_DIR}/
   mkdir -p ${INSTALL_INC_DIR}/bebop/util
   mkdir -p ${INSTALL_INC_DIR}/bebop/smc
   cp ${S}/bebop/bebop_util/include/bebop/util/init.h ${INSTALL_INC_DIR}/bebop/util/
