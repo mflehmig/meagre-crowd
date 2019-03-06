@@ -180,7 +180,7 @@ MC_WITH_LIB([SUPERLU], [superlu_gridinit],[superlu])
 MC_WITH_LIB([SUPERLU_DIST], [superlu_gridinit],[superlu_dist])
 # TODO (others: gfortran, pthread, m?)     AX_OPENMP([ACTION-IF-FOUND[, ACTION-IF-NOT-FOUND]])
 # TODO FIXME any MC_WITH_LIBS that come after pardiso is detected will fail if they don't have $OPENMP_CFLAGS since the .so doesn't have the dependency it needs
-MC_WITH_LIB([Pardiso], [pardisoinit],   [pardiso], [[AC_OPENMP AX_PTHREAD AC_F77_LIBRARY_LDFLAGS]], $FLIBS $OPENMP_CFLAGS $LIB_PTHREAD)
+MC_WITH_LIB([PARDISO], [pardisoinit],   [pardiso], [[AC_OPENMP AX_PTHREAD AC_F77_LIBRARY_LDFLAGS]], $FLIBS $OPENMP_CFLAGS $LIB_PTHREAD)
 MC_WITH_LIB([WSMP],    [pwgsmp_],       [pwsmp],   [[AC_OPENMP AX_PTHREAD AC_F77_LIBRARY_LDFLAGS]], $FLIBS $OPENMP_CFLAGS $LIB_PTHREAD)
 
 # Checks for header files.
