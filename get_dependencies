@@ -957,6 +957,7 @@ function build_superlu_dist() {
   parmetis_libpath=$libpath
 
   # CombBLAS
+  info "  ignore the following warning about CombBLAS.h:" # TODO
   find_header CombBLAS
   combblas_incpath=$incpath
   find_library combblas
