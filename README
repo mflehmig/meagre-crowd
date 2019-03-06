@@ -30,7 +30,6 @@ export CFLAGS="-I$PWD/$(gcc -dumpmachine)/include"
 
 Run the following commands to compile this program
   
-  autoreconf -fi
   ./configure (--prefix=<custom-install-location> --enable-debug=yes --with-all-solvers)
   make
   make install
