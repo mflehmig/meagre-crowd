@@ -25,8 +25,8 @@ current locations for the files, while the -rpath should
 be the final installed location.
 
 export LDFLAGS="-L$PWD/$(gcc -dumpmachine)/lib -Wl,-rpath,$PWD/$(gcc -dumpmachine)/lib" 
-export CPPFLAGS="-I $PWD/$(gcc -dumpmachine)/include"
-export CFLAGS="-I $PWD/$(gcc -dumpmachine)/include"
+export CPPFLAGS="-I$PWD/$(gcc -dumpmachine)/include"
+export CFLAGS="-I$PWD/$(gcc -dumpmachine)/include"
 
 Run the following commands to compile this program
   
