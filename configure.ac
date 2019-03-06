@@ -176,7 +176,8 @@ MC_WITH_LIB([CHOLMOD], [cholmod_solve], [cholmod])
 # has a 30 day license!
 # TODO TAUCS depends on CILK?
 MC_WITH_LIB([TAUCS],   [taucs_linsolve],[taucs])
-MC_WITH_LIB([SuperLU_DIST], [superlu_gridinit],[superlu_dist])
+MC_WITH_LIB([SUPERLU], [superlu_gridinit],[superlu])
+MC_WITH_LIB([SUPERLU_DIST], [superlu_gridinit],[superlu_dist])
 # TODO (others: gfortran, pthread, m?)     AX_OPENMP([ACTION-IF-FOUND[, ACTION-IF-NOT-FOUND]])
 # TODO FIXME any MC_WITH_LIBS that come after pardiso is detected will fail if they don't have $OPENMP_CFLAGS since the .so doesn't have the dependency it needs
 MC_WITH_LIB([Pardiso], [pardisoinit],   [pardiso], [[AC_OPENMP AX_PTHREAD AC_F77_LIBRARY_LDFLAGS]], $FLIBS $OPENMP_CFLAGS $LIB_PTHREAD)
@@ -243,6 +244,7 @@ AC_MSG_RESULT([              CHOLMOD: $have_cholmod])
 AC_MSG_RESULT([                TAUCS: $have_taucs])
 AC_MSG_RESULT([              Pardiso: $have_pardiso])
 AC_MSG_RESULT([                 WSMP: $have_wsmp])
+AC_MSG_RESULT([              SuperLU: $have_superlu])
 AC_MSG_RESULT([         SuperLU_DIST: $have_superlu_dist])
 AC_MSG_RESULT([])
 AC_MSG_RESULT([])
