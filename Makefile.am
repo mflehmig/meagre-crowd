@@ -83,7 +83,7 @@ noinst_HEADERS = src/perftimer.h src/matrix.h src/matrix_share.h src/args.h src/
                  src/solvers.h src/solver_lookup.h \
 		 src/solver_mumps.h src/solver_umfpack.h src/solver_cholmod.h \
 		 src/solver_pardiso.h src/solver_taucs.h src/solver_wsmp.h \
-		 src/solver_superlu_dist.h
+		 src/solver_superlu_dist.h src/solver_superlu.h
 
 # want these scripts installed in the end
 bin_SCRIPTS = launch_jobs collect_results
