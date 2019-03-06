@@ -20,14 +20,18 @@ to list all possible options. Decide which solvers to install (mumps, umfpack, p
 You can find a list of needed dependencies for each solver in solvers_dependencis.csv.
 
 If you have all needed dependencies for meagre-crowd already installed, make sure to set the paths. Get_dependencies installs all programs in the base directory of meagre-crowd in a folder called just as the system you're working on (<machine>).
+The -L and -I directories should be
+current locations for the files, while the -rpath should
+be the final installed location.
 
-  export LDFLAGS=${LDFLAGS}:-L<path-to-mc-base-dir>/<machine>/include/
-  export CFLAGS=${CFLAGS}:-I<path-to-mc-base-dir>/<machine>/lib
+export LDFLAGS="-L$PWD/$(gcc -dumpmachine)/lib -Wl,-rpath,$PWD/$(gcc -dumpmachine)/lib" 
+export CPPFLAGS="-I $PWD/$(gcc -dumpmachine)/include"
+export CFLAGS="-I $PWD/$(gcc -dumpmachine)/include"
 
 Run the following commands to compile this program
   
-  autoreconf -fi (optional: --add-missing)
-  ./configure
+  autoreconf -fi
+  ./configure (--prefix=<custom-install-location> --enable-debug=yes --with-all-solvers)
   make
   make install
 
@@ -39,14 +43,6 @@ to have the files installed in a different location from the
 default /usr/local (i.e. if you don't have root permission
 and would like to install it in your home directory)
 
-If you've used the get_dependancies script then you probably
-want to run configure with
-
-  ./configure LDFLAGS="-L$PWD/$(gcc -dumpmachine)/lib -Wl,-rpath,$PWD/$(gcc -dumpmachine)/lib" CPPFLAGS="-I $PWD/$(gcc -dumpmachine)/include" --prefix=$PWD/installed --enable-debug=yes --with-all-solvers
-
-or something similar. The -L and -I directories should be
-current locations for the files, while the -rpath should
-be the final installed location.
 
 
 Running the Tests

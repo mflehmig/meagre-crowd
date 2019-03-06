@@ -510,7 +510,8 @@ function build_combblas() {
   make &> /dev/null || err combblas "build failed"
   info "  installing .."
   make install &> /dev/null || err combblas "install failed"
-  cp -f ${S}/combblas/CombBLAS_${COMBBLAS_VERSION}/_install/lib/*.a ${INSTALL_LIB_DIR} &> /dev/null || err combblas "install failed"
+  a2so ${S}/combblas/CombBLAS_${COMBBLAS_VERSION}/_install/lib/libCombBLAS.a -lm
+  cp -f ${S}/combblas/CombBLAS_${COMBBLAS_VERSION}/_install/lib/*.so ${INSTALL_LIB_DIR} &> /dev/null || err combblas "install failed"
   cp -rf ${S}/combblas/CombBLAS_${COMBBLAS_VERSION}/_install/include/* ${INSTALL_INC_DIR} &> /dev/null || err combblas "install failed"
   # fix some paths for SuperLU
   mv -f ${INSTALL_INC_DIR}/psort ${INSTALL_INC_DIR}/CombBLAS &> /dev/null || err combblas "install failed"
@@ -981,11 +982,12 @@ function build_superlu_dist() {
     -DCMAKE_INSTALL_PREFIX=${INSTALL_BASE_DIR} \
     -DCMAKE_EXE_LINKER_FLAGS="-lmetis" &> /dev/null || err superlu_dist "configuring failed"
   info "  building .."
-  make &> /dev/null || err superlu_dist "build failed"
-#  make VERBOSE=1
+  #make &> /dev/null || err superlu_dist "build failed"
+  make V=1 || err superlu_dist "build failed"
   info "  installing .." # TODO
   cp $superlu_dist_root/_build/SRC/*.h $INSTALL_INC_DIR
-  cp $superlu_dist_root/_build/SRC/*.a $INSTALL_LIB_DIR
+  a2so $superlu_dist_root/_build/SRC/libsuperlu_dist.a -lm
+  cp $superlu_dist_root/_build/SRC/*.so $INSTALL_LIB_DIR
 
 } # /build_superlu_dist
 
@@ -1012,7 +1014,6 @@ function build_bebop() {
   make &> /dev/null || err bebop "sparse matrix converter build failed"
   info "  install"
   cd ${S}/bebop/bebop_util
-  cp -f libbebop_util.a ${INSTALL_LIB_DIR}
   cp -f libbebop_util.so ${INSTALL_LIB_DIR}
   cp ${S}/bebop/sparse_matrix_converter/sparse_matrix_converter ${INSTALL_BIN_DIR}/
   mkdir -p ${INSTALL_INC_DIR}/bebop/util
