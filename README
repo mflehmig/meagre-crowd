@@ -35,15 +35,9 @@ Run the following commands to compile this program
   make
   make install
 
-Run
-
-  ./configure --prefix=<dir>
-
 to have the files installed in a different location from the
 default /usr/local (i.e. if you don't have root permission
-and would like to install it in your home directory)
-
-
+and would like to install it in your home directory) use the --prefix during configure.
 
 Running the Tests
 -----------------
@@ -51,7 +45,6 @@ Running the Tests
 To execute the test suite run
 
 make check
-
 
 Preparing for Distribution
 --------------------------
