@@ -19,14 +19,6 @@
 #                                               -*- Autoconf -*-
 # Process this file with autoconf to produce a configure script.
 
-#CFLAGS_backup="${CFLAGS}"
-#LDFLAGS_backup="${LDFLAGS}"
-#CFLAGS="-I/home/thomas/Code/meagre-crowd.git/x86_64-linux-gnu/include ${CFLAGS}"
-#CPPFLAGS="-I/home/thomas/Code/meagre-crowd.git/x86_64-linux-gnu/include ${CPPFLAGS}"
-#LDFLAGS="-L/home/thomas/Code/meagre-crowd.git/x86_64-linux-gnu/lib/ ${LDFLAGS}"
-
-
-
 AC_PREREQ([2.69])
 AC_INIT([meagre-crowd],[0.4.6],[<meagre-crowd@googlegroups.com>])
 
