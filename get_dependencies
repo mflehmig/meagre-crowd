@@ -1200,6 +1200,8 @@ done
 # make install lib dir
 #sleep 2
 
+info "Note that if you have a cholmod.h, meagre-crowd will assume you want to use it. If you don't, unset CHOLMOD using ..."
+
 TOC=$(date +%s)
 let DELTA=${TOC}-${TIC}
 
