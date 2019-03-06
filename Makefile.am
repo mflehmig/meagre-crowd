@@ -64,6 +64,12 @@ endif
 
 if HAVE_SUPERLU_DIST
 meagre_crowd_SOURCES += src/solver_superlu_dist.c
+BUILT_TESTS += tests/hello-superlu_dist
+endif
+
+if HAVE_SUPERLU
+meagre_crowd_SOURCES += src/solver_superlu.c
+BUILT_TESTS += tests/hello-superlu
 endif
 
 # TODO make openMP optional... OPENMP_CFLAGS, PTHREADS and FLIBS are all required only for Paradiso!
@@ -194,3 +200,24 @@ help:
 	@echo "  distcheck        - .tar, then untar in new dir and test"
 	@echo "  tags             - generate ctags for editing source files"
 	@echo "  style            - run astyle on source files to tidy formatting"
+
+# automatic remaking
+$(srcdir)/configure: configure.ac aclocal.m4
+	cd '$(srcdir)' && autoconf
+# autoheader might not change config.h.in, so touch a stamp file.
+$(srcdir)/config.h.in: stamp-h.in
+$(srcdir)/stamp-h.in: configure.ac aclocal.m4
+	cd '$(srcdir)' && autoheader
+	echo timestamp > '$(srcdir)/stamp-h.in'
+     
+config.h: stamp-h
+stamp-h: config.h.in config.status
+	./config.status
+     
+Makefile: Makefile.in config.status
+	./config.status
+     
+config.status: configure
+	./config.status --recheck
+
+AC_CONFIG_FILES([stamp-h], [echo timestamp > stamp-h])
