@@ -1,7 +1,7 @@
 AC_DEFUN([ACXX_MPI], [
-  AC_ARG_VAR(MPICPP,[MPI CPP compiler command])
-  AC_CHECK_PROGS(MPICPP, mpiccxx, $CPP)
-  acxx_mpi_save_CPP="$CPP"
-  CPP="$MPICPP"
-  AC_SUBST(MPICPP)
+  AC_ARG_VAR(MPICXX,[MPI CXX compiler command])
+  AC_CHECK_PROGS(MPICXX, mpicxx, $CPP)
+  acxx_mpi_save_CXX="$CXX"
+  CXX="$MPICXX"
+  AC_SUBST(MPIXX)
 ])

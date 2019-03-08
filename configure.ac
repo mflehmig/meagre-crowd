@@ -30,14 +30,12 @@ m4_include([m4/ax_pthread.m4])
 m4_include([m4/acx_mpi.m4])
 m4_include([m4/acxx_mpi.m4])
 
-
 AC_CONFIG_SRCDIR([src/meagre-crowd.c])
 AC_CONFIG_HEADERS([src/config.h])
 
 AC_USE_SYSTEM_EXTENSIONS
 
-
-CFLAGS="-std=c99 $CFLAGS"
+dnl CFLAGS="-std=c99 $CFLAGS"
 
 # debugging
 
@@ -67,7 +65,6 @@ if test "x$enable_profile" = "xyes"; then
 else
   AC_MSG_RESULT(no)
 fi
-
 
 # makefile
 AM_INIT_AUTOMAKE([1.11 subdir-objects]) # need at least v1.11 of automake for SILENT_RULES
@@ -171,8 +168,8 @@ m4_undefine([MC_EXTRA_FLAGS])
 
 MC_WITH_LIB([MUMPS],   [dmumps_c],      [dmumps])
 MC_WITH_LIB([UMFPACK], [umfpack_di_symbolic], [umfpack])
-# might not be needed, if already included through another solver
-#MC_WITH_LIB([CHOLMOD], [cholmod_solve], [cholmod])
+dnl might not be needed, if already included through another solver
+dnl MC_WITH_LIB([CHOLMOD], [cholmod_solve], [cholmod])
 # has a 30 day license!
 # TODO TAUCS depends on CILK?
 MC_WITH_LIB([TAUCS],   [taucs_linsolve],[taucs])
@@ -184,16 +181,14 @@ MC_WITH_LIB([SUPERLU], [sgssvx],[superlu])
 MC_WITH_LIB([SUPERLU_DIST], [superlu_gridinit],[superlu_dist], , [-lCombBLAS -lopenblas -lmetis -lparmetis])
 AC_LANG_POP()
 
-if HAVE_SUPERLU_DIST; then
-  echo "=============="
+# links needed libraries for superlu_dist
+if test "x$have_superlu_dist" = "xyes"; then
   CC=mpicxx
-  CPP=mpicxx
-  AC_SEARCH_LIBS([mm_read_mtx_array_size], [COMBBLAS], , AC_MSG_ERROR([missing Combinatorial BLAS library]))
-  AC_SEARCH_LIBS([dgemm_], [OPENBLAS BLAS NETLIB], , AC_MSG_ERROR([missing a BLAS library]))
-  AC_SEARCH_LIBS([metis_nodend], [METIS], , AC_MSG_ERROR([missing METIS library]))
-  AC_SEARCH_LIBS([parmetis_v3_nodend], [PARMETIS], , AC_MSG_ERROR([missing parMETIS library]))
-#  AC_CHECK_LIBS([])
-  LIBS += "-lCombBLAS -lopenblas -lmetis -lparmetis"
+  CXX=mpicxx
+  AC_SEARCH_LIBS([dgemm_], [openblas], , AC_MSG_ERROR([missing a BLAS library]))
+  AC_SEARCH_LIBS([metis_free], [metis], , AC_MSG_ERROR([missing METIS library]))
+  AC_SEARCH_LIBS([parmetis_v3_nodend], [parmetis], , AC_MSG_ERROR([missing parMETIS library]))
+  AC_SEARCH_LIBS([mm_strdup], [CombBLAS], , AC_MSG_ERROR([missing Combinatorial BLAS CombBLAS library]))
   AC_CHECK_HEADERS([superlu_ddefs.h])
 else
   HAVE_COMBBLAS=no
