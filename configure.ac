@@ -15,9 +15,9 @@
  #
  #     You should have received a copy of the GNU General Public License
  #     along with this program.  If not, see <http://www.gnu.org/licenses/>.
-
-#                                               -*- Autoconf -*-
-# Process this file with autoconf to produce a configure script.
+ #
+ #                                               -*- Autoconf -*-
+ # Process this file with autoconf to produce a configure script.
 
 AC_PREREQ([2.69])
 AC_INIT([meagre-crowd],[0.4.6],[<meagre-crowd@googlegroups.com>])
@@ -28,6 +28,8 @@ AC_CONFIG_MACRO_DIR([m4])
 AC_CONFIG_AUX_DIR([build-aux])
 m4_include([m4/ax_pthread.m4])
 m4_include([m4/acx_mpi.m4])
+m4_include([m4/acxx_mpi.m4])
+
 
 AC_CONFIG_SRCDIR([src/meagre-crowd.c])
 AC_CONFIG_HEADERS([src/config.h])
@@ -65,11 +67,6 @@ if test "x$enable_profile" = "xyes"; then
 else
   AC_MSG_RESULT(no)
 fi
-# .. and export so Makefile will use them
-AC_SUBST(CFLAGS)
-AC_SUBST(CXXFLAGS)
-AC_SUBST(LDFLAGS)
-AC_SUBST(DEBUG)
 
 
 # makefile
@@ -78,12 +75,16 @@ AM_SILENT_RULES([yes]) # enable kernel like cleaner build
 AC_CONFIG_FILES([Makefile])
 
 # Checks for programs.
+# mpicc
 ACX_MPI
  AC_PROG_CC([$MPICC])
  AC_SUBST(MPILIBS)
 dnl AC_PROG_CC
 dnl AM_PROG_CC_C_O
 
+# mpicxx
+ACXX_MPI
+ AC_PROG_CPP([$MPICXX])
 # Checks for libraries.
 
 # BeBOP: matrix market file format
@@ -110,7 +111,6 @@ AC_ARG_WITH(mat,
       )
  AM_CONDITIONAL([HAVE_MATIO],[test "x$have_matio" = "xyes"])
  AC_SUBST([have_matio])
-
 
 AC_ARG_WITH(all-solvers, AS_HELP_STRING(--with-all-solvers, Force presence of all solvers))
 
@@ -172,12 +172,36 @@ m4_undefine([MC_EXTRA_FLAGS])
 MC_WITH_LIB([MUMPS],   [dmumps_c],      [dmumps])
 MC_WITH_LIB([UMFPACK], [umfpack_di_symbolic], [umfpack])
 # might not be needed, if already included through another solver
-MC_WITH_LIB([CHOLMOD], [cholmod_solve], [cholmod])
+#MC_WITH_LIB([CHOLMOD], [cholmod_solve], [cholmod])
 # has a 30 day license!
 # TODO TAUCS depends on CILK?
 MC_WITH_LIB([TAUCS],   [taucs_linsolve],[taucs])
-MC_WITH_LIB([SUPERLU], [superlu_gridinit],[superlu])
-MC_WITH_LIB([SUPERLU_DIST], [superlu_gridinit],[superlu_dist])
+
+# checks for SuperLU_dist
+AC_LANG_PUSH(C++)
+CXXFLAGS="$CXXFLAGS -fopenmp" # don't have to be saved, they are substituted earlier
+MC_WITH_LIB([SUPERLU], [sgssvx],[superlu])
+MC_WITH_LIB([SUPERLU_DIST], [superlu_gridinit],[superlu_dist], , [-lCombBLAS -lopenblas -lmetis -lparmetis])
+AC_LANG_POP()
+
+if HAVE_SUPERLU_DIST; then
+  echo "=============="
+  CC=mpicxx
+  CPP=mpicxx
+  AC_SEARCH_LIBS([mm_read_mtx_array_size], [COMBBLAS], , AC_MSG_ERROR([missing Combinatorial BLAS library]))
+  AC_SEARCH_LIBS([dgemm_], [OPENBLAS BLAS NETLIB], , AC_MSG_ERROR([missing a BLAS library]))
+  AC_SEARCH_LIBS([metis_nodend], [METIS], , AC_MSG_ERROR([missing METIS library]))
+  AC_SEARCH_LIBS([parmetis_v3_nodend], [PARMETIS], , AC_MSG_ERROR([missing parMETIS library]))
+#  AC_CHECK_LIBS([])
+  LIBS += "-lCombBLAS -lopenblas -lmetis -lparmetis"
+  AC_CHECK_HEADERS([superlu_ddefs.h])
+else
+  HAVE_COMBBLAS=no
+  HAVE_OPENBLAS=no
+  HAVE_METIS=no
+  HAVE_PARMETIS=no
+fi
+
 # TODO (others: gfortran, pthread, m?)     AX_OPENMP([ACTION-IF-FOUND[, ACTION-IF-NOT-FOUND]])
 # TODO FIXME any MC_WITH_LIBS that come after pardiso is detected will fail if they don't have $OPENMP_CFLAGS since the .so doesn't have the dependency it needs
 MC_WITH_LIB([PARDISO], [pardisoinit],   [pardiso], [[AC_OPENMP AX_PTHREAD AC_F77_LIBRARY_LDFLAGS]], $FLIBS $OPENMP_CFLAGS $LIB_PTHREAD)
@@ -217,6 +241,14 @@ AC_SUBST(have_dot)
 AC_CONFIG_FILES([doc/Doxyfile])
 AC_OUTPUT
 
+# .. and export so Makefile will use them
+AC_SUBST(CC)
+AC_SUBST(CPP)
+AC_SUBST(CFLAGS)
+AC_SUBST(CXXFLAGS)
+AC_SUBST(LDFLAGS)
+AC_SUBST(LIBS)
+AC_SUBST(DEBUG)
 
 AC_MSG_RESULT([])
 AC_MSG_RESULT([   Meagre-Crowd Configuration Summary       ])

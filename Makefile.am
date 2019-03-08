@@ -44,9 +44,9 @@ meagre_crowd_SOURCES += src/solver_umfpack.c
 BUILT_TESTS += tests/hello-umfpack
 endif
 
-if HAVE_CHOLMOD
-meagre_crowd_SOURCES += src/solver_cholmod.c
-endif
+#if HAVE_CHOLMOD
+#meagre_crowd_SOURCES += src/solver_cholmod.c
+#endif
 
 if HAVE_TAUCS
 meagre_crowd_SOURCES += src/solver_taucs.c
@@ -70,6 +70,7 @@ endif
 if HAVE_SUPERLU
 meagre_crowd_SOURCES += src/solver_superlu.c
 BUILT_TESTS += tests/hello-superlu
+LIBS += "$(LDFLAGS) -lCombBLAS -lopenblas -lmetis -lparmetis" 
 endif
 
 # TODO make openMP optional... OPENMP_CFLAGS, PTHREADS and FLIBS are all required only for Paradiso!
@@ -77,6 +78,7 @@ LIBS += $(PTHREAD_LIBS) $(FLIBS) $(MPILIBS)
 AM_CFLAGS = $(CFLAGS) $(OPENMP_CFLAGS) $(PTHREAD_CFLAGS) -Werror #-Wextra
 # this is required for Sun systems, but will break when we want to do the same for MPI... (mpicc)
 #meagre_crowd_CC = $(PTHREAD_CC)
+AM_CXXFLAGS = $(CFLAGS) $(OPENMP_CFLAGS) $(PTHREAD_CFLAGS) -Werror #-Wextra
 
 # header files that need to be distributed but not installed
 noinst_HEADERS = src/perftimer.h src/matrix.h src/matrix_share.h src/args.h src/file.h \
@@ -151,7 +153,7 @@ check-local: atconfig atlocal $(TESTSUITE)
 installcheck-local: atconfig atlocal $(TESTSUITE)
 	$(SHELL) '$(TESTSUITE)' AUTOTEST_PATH='$(bindir)' \
 	  $(TESTSUITEFLAGS) -k '!hello,!unit'
-# don't run dependancy and unit tests
+# don't run dependency and unit tests
 
 clean-local-check:
 	test ! -f '$(TESTSUITE)' || \
@@ -200,24 +202,3 @@ help:
 	@echo "  distcheck        - .tar, then untar in new dir and test"
 	@echo "  tags             - generate ctags for editing source files"
 	@echo "  style            - run astyle on source files to tidy formatting"
-
-# automatic remaking
-$(srcdir)/configure: configure.ac aclocal.m4
-	cd '$(srcdir)' && autoconf
-# autoheader might not change config.h.in, so touch a stamp file.
-$(srcdir)/config.h.in: stamp-h.in
-$(srcdir)/stamp-h.in: configure.ac aclocal.m4
-	cd '$(srcdir)' && autoheader
-	echo timestamp > '$(srcdir)/stamp-h.in'
-     
-config.h: stamp-h
-stamp-h: config.h.in config.status
-	./config.status
-     
-Makefile: Makefile.in config.status
-	./config.status
-     
-config.status: configure
-	./config.status --recheck
-
-AC_CONFIG_FILES([stamp-h], [echo timestamp > stamp-h])

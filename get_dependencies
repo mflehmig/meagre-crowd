@@ -989,6 +989,7 @@ function build_superlu_dist() {
   #make &> /dev/null || err superlu_dist "build failed"
   make V=1 || err superlu_dist "build failed"
   info "  installing .." # TODO
+  cp $superlu_dist_root/SRC/*.h $INSTALL_INC_DIR
   cp $superlu_dist_root/_build/SRC/*.h $INSTALL_INC_DIR
   a2so $superlu_dist_root/_build/SRC/libsuperlu_dist.a -lm
   cp $superlu_dist_root/_build/SRC/*.so $INSTALL_LIB_DIR
@@ -1200,7 +1201,7 @@ done
 # make install lib dir
 #sleep 2
 
-info "Note that if you have a cholmod.h, meagre-crowd will assume you want to use it. If you don't, unset CHOLMOD using ..."
+info "Note that if you have a cholmod.h, meagre-crowd will assume you want to use it. If you don't, unset CHOLMOD by commenting out the respective lines in Makefile.am and configure.ac."
 
 TOC=$(date +%s)
 let DELTA=${TOC}-${TIC}
