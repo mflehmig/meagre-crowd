@@ -30,7 +30,7 @@
 // static inline int _perftimer_malloc_head(perftimer_t** ph);
 static inline int _perftimer_malloc_head(perftimer_t** ph)
 {
-  if ((*ph = malloc(sizeof(perftimer_t))) == NULL) {
+  if ((*ph = (struct perftimer_t *)malloc(sizeof(perftimer_t))) == NULL) {
     warn("perftimer_malloc(head)");  // shows errno string
     return -1;  // allocation failure
   }
@@ -89,7 +89,7 @@ int perftimer_inc(perftimer_t* h, char const* const s, const size_t n)
 
   // allocate a new block into the selected location
   perftimer_tic_t* ptr;
-  if ((ptr = malloc(sizeof(perftimer_tic_t))) == NULL) {
+  if ((ptr = (struct perftimer_tic_t *)malloc(sizeof(perftimer_tic_t))) == NULL) {
     warn("perftimer_inc()");  // shows errno string
     return -2;  // malloc failure
   }
@@ -116,7 +116,7 @@ int perftimer_inc(perftimer_t* h, char const* const s, const size_t n)
     }
     else {  // copy the string in, make sure its null terminated (safety first)
       // TODO use strndup instead?
-      ptr->desc = malloc((nn + 1) * sizeof(char));  // need an extra char for '\0'
+      ptr->desc = (char *)malloc((nn + 1) * sizeof(char));  // need an extra char for '\0'
       strncpy(ptr->desc, s, nn);
       ptr->desc[nn] = '\0';  // make sure the string is null terminated
     }
@@ -210,8 +210,8 @@ int perftimer_snprintf(perftimer_t const * const h, char* s, const size_t n, con
 
   unsigned int m_max = _max_links(h);  // longest number of links
   // create list of times
-  double* t = calloc(m_max, sizeof(double));
-  unsigned int * r = calloc(m_max, sizeof(unsigned int));  // how many went into this count
+  double* t = (double *)calloc(m_max, sizeof(double));
+  unsigned int * r = (unsigned int *)calloc(m_max, sizeof(unsigned int));  // how many went into this count
   perftimer_t const * hs = h;
   perftimer_tic_t const * ptr = h->head;
   while (hs != NULL) {
@@ -349,8 +349,8 @@ int perftimer_snprintf_csv_body(perftimer_t const * const h, char* s, const size
 
   unsigned int m_max = _max_links(h);  // longest number of links
   // create list of times
-  double* t = calloc(m_max, sizeof(double));
-  unsigned int * r = calloc(m_max, sizeof(unsigned int));  // how many went into this count
+  double* t = (double *)calloc(m_max, sizeof(double));
+  unsigned int * r = (unsigned int *)calloc(m_max, sizeof(unsigned int));  // how many went into this count
   perftimer_t const * hs = h;
   perftimer_tic_t const * ptr = h->head;
   while (hs != NULL) {
@@ -420,7 +420,7 @@ void perftimer_printf(perftimer_t const * const h, const unsigned int d)
   size_t n = perftimer_printlen(h, d);
   if (n == 0)  // nothing to do
     return;
-  char* s = malloc(n * sizeof(char));
+  char* s = (char *)malloc(n * sizeof(char));
   perftimer_snprintf(h, s, n, d);
   printf("%s\n", s);
   free(s);
@@ -433,7 +433,7 @@ void perftimer_printf_csv_header(perftimer_t const * const h, const unsigned int
   size_t n = perftimer_printlen(h, d);  // actual size will be smaller but that's okay
   if (n == 0)  // nothing to do
     return;
-  char* s = malloc(n * sizeof(char));
+  char* s = (char *)malloc(n * sizeof(char));
   perftimer_snprintf_csv_header(h, s, n, d);
   printf("%s\n", s);
   free(s);
@@ -446,7 +446,7 @@ void perftimer_printf_csv_body(perftimer_t const * const h, const unsigned int d
   size_t n = perftimer_printlen(h, d);  // actual size will be smaller but that's okay
   if (n == 0)  // nothing to do
     return;
-  char* s = malloc(n * sizeof(char));
+  char* s = (char *)malloc(n * sizeof(char));
   perftimer_snprintf_csv_body(h, s, n, d);
   printf("%s\n", s);
   free(s);
