@@ -52,7 +52,7 @@ static void _qsort_coo(matrix_t* m, int x)
   assert(m->format == SM_COO);
   assert(m->data_type == REAL_DOUBLE);
 
-  struct _qsort_coo_data_double* data = malloc((m->nz) * sizeof(_qsort_coo_data_double));
+  struct _qsort_coo_data_double* data = (struct _qsort_coo_data_double *)malloc((m->nz) * sizeof(_qsort_coo_data_double));
   assert(data != NULL);
 
   for (unsigned int i = 0; i < m->nz; i++) { // if this fails, make int signed
@@ -77,8 +77,8 @@ static void _qsort_coo(matrix_t* m, int x)
 
 static int _qsort_coo_cmp_rows_cols(const void* a, const void* b)
 {
-  const struct _qsort_coo_data_double* aa = a;
-  const struct _qsort_coo_data_double* bb = b;
+  const struct _qsort_coo_data_double* aa = (struct _qsort_coo_data_double *)a;
+  const struct _qsort_coo_data_double* bb = (struct _qsort_coo_data_double *)b;
   if ((*aa).ii < (*bb).ii) {
     return -1;
   }
@@ -97,8 +97,8 @@ static int _qsort_coo_cmp_rows_cols(const void* a, const void* b)
 
 static int _qsort_coo_cmp_cols_rows(const void* a, const void* b)
 {
-  const struct _qsort_coo_data_double* aa = a;
-  const struct _qsort_coo_data_double* bb = b;
+  const struct _qsort_coo_data_double* aa = (struct _qsort_coo_data_double *)a;
+  const struct _qsort_coo_data_double* bb = (struct _qsort_coo_data_double *)b;
   if ((*aa).jj < (*bb).jj) {
     return -1;
   }
@@ -117,7 +117,7 @@ static int _qsort_coo_cmp_cols_rows(const void* a, const void* b)
 
 inline matrix_t* malloc_matrix()
 {
-  matrix_t* m = malloc(sizeof(matrix_t));
+  matrix_t* m = (matrix_t *)malloc(sizeof(matrix_t));
   // make this safe to free_matrix() whatever comes out of this
   if (m != NULL) {
     m->format = INVALID;
@@ -173,7 +173,7 @@ matrix_t* copy_matrix(matrix_t* m)
 {
   assert(m != NULL);
 
-  matrix_t* ret = malloc(sizeof(matrix_t));
+  matrix_t* ret = (matrix_t *)malloc(sizeof(matrix_t));
   if (ret == NULL)  // malloc failed
     return NULL;
 
@@ -218,7 +218,7 @@ matrix_t* copy_matrix(matrix_t* m)
   // handle indices: ii, jj
   switch (m->format) {
     case SM_COO:
-      ret->ii = malloc((m->nz) * sizeof(unsigned int));
+      ret->ii = (unsigned int *)malloc((m->nz) * sizeof(unsigned int));
       if (ret->ii == NULL) {  // malloc failed
         free(ret->dd);
         free(ret);
@@ -226,7 +226,7 @@ matrix_t* copy_matrix(matrix_t* m)
       }
       memcpy(ret->ii, m->ii, (m->nz) * sizeof(unsigned int));  // memcpy(*dest,*src,n)
 
-      ret->jj = malloc((m->nz) * sizeof(unsigned int));
+      ret->jj = (unsigned int *)malloc((m->nz) * sizeof(unsigned int));
       if (ret->jj == NULL) {  // malloc failed
         free(ret->ii);
         free(ret->dd);
@@ -237,7 +237,7 @@ matrix_t* copy_matrix(matrix_t* m)
       break;
 
     case SM_CSR:
-      ret->ii = malloc((m->m + 1) * sizeof(unsigned int));
+      ret->ii = (unsigned int *)malloc((m->m + 1) * sizeof(unsigned int));
       if (ret->ii == NULL) {  // malloc failed
         free(ret->dd);
         free(ret);
@@ -245,7 +245,7 @@ matrix_t* copy_matrix(matrix_t* m)
       }
       memcpy(ret->ii, m->ii, (m->m + 1) * sizeof(unsigned int));  // memcpy(*dest,*src,n)
 
-      ret->jj = malloc((m->nz) * sizeof(unsigned int));
+      ret->jj = (unsigned int *)malloc((m->nz) * sizeof(unsigned int));
       if (ret->jj == NULL) {  // malloc failed
         free(ret->ii);
         free(ret->dd);
@@ -256,7 +256,7 @@ matrix_t* copy_matrix(matrix_t* m)
       break;
 
     case SM_CSC:
-      ret->jj = malloc((m->n + 1) * sizeof(unsigned int));
+      ret->jj = (unsigned int *)malloc((m->n + 1) * sizeof(unsigned int));
       if (ret->jj == NULL) {  // malloc failed
         free(ret->dd);
         free(ret);
@@ -264,7 +264,7 @@ matrix_t* copy_matrix(matrix_t* m)
       }
       memcpy(ret->jj, m->jj, (m->n + 1) * sizeof(unsigned int));  // memcpy(*dest,*src,n)
 
-      ret->ii = malloc((m->nz) * sizeof(unsigned int));
+      ret->ii = (unsigned int *)malloc((m->nz) * sizeof(unsigned int));
       if (ret->ii == NULL) {  // malloc failed
         free(ret->jj);
         free(ret->dd);
@@ -408,8 +408,8 @@ int cmp_matrix(matrix_t* a, matrix_t* b)
       case REAL_DOUBLE:
       {
         const double tol = 1e-15;  // tolerance: what to approximate as zero when converting // TODO use machine epsilon*2?
-        double* d_old = a->dd;
-        double* d_new = bb->dd;
+        double* d_old = (double *)a->dd;
+        double* d_new = (double *)bb->dd;
         for (unsigned int i = 0; i < a->nz; i++) {
           if ((*d_old < *d_new - tol) || (*d_old > *d_new + tol)) {  // if !zero store, otherwise skip
             ret = -1;
@@ -452,7 +452,7 @@ int cmp_matrix(matrix_t* a, matrix_t* b)
 struct sparse_matrix_t* _bebop_input(matrix_t* m, enum sparse_matrix_storage_format_t f);
 struct sparse_matrix_t* _bebop_input(matrix_t* m, enum sparse_matrix_storage_format_t f)
 {
-  struct sparse_matrix_t* A = malloc(sizeof(struct sparse_matrix_t));
+  struct sparse_matrix_t* A = (sparse_matrix_t *)malloc(sizeof(struct sparse_matrix_t));
 
   enum value_type_t v = REAL;
   switch (m->data_type) {
@@ -475,7 +475,7 @@ struct sparse_matrix_t* _bebop_input(matrix_t* m, enum sparse_matrix_storage_for
     case CSC:
     {
       A->format = CSC;
-      struct csc_matrix_t* p = calloc(1, sizeof(struct csc_matrix_t));
+      struct csc_matrix_t* p = (struct csc_matrix_t *)calloc(1, sizeof(struct csc_matrix_t));
       A->repr = p;
       p->m = m->m;
       p->n = m->n;
@@ -491,7 +491,7 @@ struct sparse_matrix_t* _bebop_input(matrix_t* m, enum sparse_matrix_storage_for
     case CSR:
     {
       A->format = CSR;
-      struct csr_matrix_t* p = calloc(1, sizeof(struct csr_matrix_t));
+      struct csr_matrix_t* p = (struct csr_matrix_t *)calloc(1, sizeof(struct csr_matrix_t));
       A->repr = p;
       p->m = m->m;
       p->n = m->n;
@@ -507,7 +507,7 @@ struct sparse_matrix_t* _bebop_input(matrix_t* m, enum sparse_matrix_storage_for
     case COO:
     {
       A->format = COO;
-      struct coo_matrix_t* p = calloc(1, sizeof(struct coo_matrix_t));
+      struct coo_matrix_t* p = (struct coo_matrix_t *)calloc(1, sizeof(struct coo_matrix_t));
       A->repr = p;
       p->m = m->m;
       p->n = m->n;
@@ -563,7 +563,7 @@ int _csc2coo(matrix_t* m)
   assert(ierr == 0);  // might fail on malloc?
 
   // store new matrix
-  struct coo_matrix_t* p = A->repr;
+  struct coo_matrix_t* p = (struct coo_matrix_t *)A->repr;
   m->format = SM_COO;
   m->ii = (unsigned int*) p->II;
   m->jj = (unsigned int*) p->JJ;
@@ -605,7 +605,7 @@ int _coo2csc(matrix_t* m)
   assert(ierr == 0);  // could fail on malloc?
 
   // store new matrix
-  struct csc_matrix_t* p = A->repr;
+  struct csc_matrix_t* p = (struct csc_matrix_t *)A->repr;
   m->format = SM_CSC;
   m->ii = (unsigned int*) p->rowidx;
   m->jj = (unsigned int*) p->colptr;
@@ -657,7 +657,7 @@ int _csr2coo(matrix_t* m)
   assert(ierr == 0);  // could fail on malloc?
 
   // store new matrix
-  struct coo_matrix_t* p = A->repr;
+  struct coo_matrix_t* p = (struct coo_matrix_t *)A->repr;
   m->format = SM_COO;
   m->ii = (unsigned int*) p->II;
   m->jj = (unsigned int*) p->JJ;
@@ -698,7 +698,7 @@ int _coo2csr(matrix_t* m)
   int ierr = sparse_matrix_convert(A, CSR);
   assert(ierr == 0);  // could fail on malloc?
 
-  struct csr_matrix_t* p = A->repr;
+  struct csr_matrix_t* p = (struct csr_matrix_t *)A->repr;
   m->format = SM_CSR;
   m->ii = (unsigned int*) p->rowptr;
   m->jj = (unsigned int*) p->colidx;
@@ -762,10 +762,10 @@ int _drow2coo(matrix_t* m, const enum matrix_base_t b)
 
   // allocate maximum size, then realloc later to reduce to the appropriate size ptr
   // data (dd) is already maximum size
-  m->ii = malloc((m->m) * (m->n) * sizeof(unsigned int));
+  m->ii = (unsigned int *)malloc((m->m) * (m->n) * sizeof(unsigned int));
   if (m->ii == NULL)
     return -1;
-  m->jj = malloc((m->m) * (m->n) * sizeof(unsigned int));
+  m->jj = (unsigned int *)malloc((m->m) * (m->n) * sizeof(unsigned int));
   if (m->jj == NULL) {
     free(m->ii);
     m->ii = NULL;
@@ -782,8 +782,8 @@ int _drow2coo(matrix_t* m, const enum matrix_base_t b)
   switch (m->data_type) {
     case REAL_DOUBLE:
     {
-      double* d_old = m->dd;
-      double* d_new = m->dd;
+      double* d_old = (double *)m->dd;
+      double* d_new = (double *)m->dd;
       for (unsigned int i = 0; i < rows; i++) {  // (i initialized already)
         for (unsigned int j = 0; j < cols; j++) {  // (j initialized already)
           // index = (i*cols + j); // row-major indexing
@@ -1108,7 +1108,7 @@ static inline void _symmetry_swap(matrix_t* m)
   // an item at (1,2) is moved to (2,1) -- the other side of the triangle
   void * const t = m->ii;
   m->ii = m->jj;
-  m->jj = t;
+  m->jj = (unsigned int *)t;
 
   // update matrix info
   if (m->location == UPPER_TRIANGULAR)
@@ -1138,7 +1138,7 @@ static inline int _symmetry_both( matrix_t* m ) {
   // reverse ii and jj in the copied portions, appended to the old data
   memcpy(m->ii + nz_old, m->jj, nz_old * sizeof(unsigned int));
   memcpy(m->jj + nz_old, m->ii, nz_old * sizeof(unsigned int));
-  memcpy(m->dd + nz_old * dwidth, m->dd, nz_old * dwidth);
+  memcpy((float *)m->dd + nz_old * dwidth, m->dd, nz_old * dwidth);
 
   // update ptrs
   m->location = MC_STORE_BOTH;
@@ -1153,7 +1153,7 @@ static inline int _symmetry_both( matrix_t* m ) {
         // Note: have to use memmove here since potentially the arrays dst and src overlap when we shuffle them downwards
         memmove(m->ii + i, m->ii + (i + 1), (m->nz - i - 1 - del) * sizeof(unsigned int));
         memmove(m->jj + i, m->jj + (i + 1), (m->nz - i - 1 - del) * sizeof(unsigned int));
-        memmove(m->dd + i * dwidth, m->dd + (i + 1) * dwidth, (m->nz - i - 1 - del) * dwidth);
+        memmove((float *)m->dd + i * dwidth, (float *)m->dd + (i + 1) * dwidth, (m->nz - i - 1 - del) * dwidth);
         i--;
       }
       del++;  // deleting the i-th entry
@@ -1182,8 +1182,8 @@ static inline int _realloc_arrays(matrix_t* m, size_t nz)
 
   const size_t dwidth = _data_width(m->data_type);
   // resize arrays
-  unsigned int* ii_new = realloc(m->ii, nz * sizeof(unsigned int));
-  unsigned int* jj_new = realloc(m->jj, nz * sizeof(unsigned int));
+  unsigned int* ii_new = (unsigned int *)realloc(m->ii, nz * sizeof(unsigned int));
+  unsigned int* jj_new = (unsigned int *)realloc(m->jj, nz * sizeof(unsigned int));
   void* dd_new = realloc(m->dd, nz * dwidth);
 
   // udpate ptrs
@@ -1229,7 +1229,7 @@ static inline void _coo_merge_duplicate_entries(matrix_t* m)
         if (j + 1 != m->nz) {  // unless its the last entry
           memcpy(m->ii + j, m->ii + (j + 1), (m->nz - j - 1) * sizeof(unsigned int));
           memcpy(m->jj + j, m->jj + (j + 1), (m->nz - j - 1) * sizeof(unsigned int));
-          memcpy(m->dd + j * dwidth, m->dd + (j + 1) * dwidth, (m->nz - j - 1) * dwidth);
+          memcpy((float *)m->dd + j * dwidth, (float *)m->dd + (j + 1) * dwidth, (m->nz - j - 1) * dwidth);
         }
       }
     }
@@ -1252,9 +1252,9 @@ static inline void _symmetry_lower(matrix_t* m)
   for (unsigned i = 0; i < m->nz; i++) {
     if (m->ii[i] >= m->jj[i]) {  // if row is >= column (lower triangle), keep this entry
       if (i != nz) {  // don't need to copy if its staying at the current location
-        memcpy(m->ii + nz, m->ii + i, sizeof(unsigned int));
-        memcpy(m->jj + nz, m->jj + i, sizeof(unsigned int));
-        memcpy(m->dd + nz * dwidth, m->dd + i * dwidth, dwidth);
+        memcpy((unsigned int *)m->ii + nz, m->ii + i, sizeof(unsigned int));
+        memcpy((unsigned int *)m->jj + nz, m->jj + i, sizeof(unsigned int));
+        memcpy((float *)m->dd + nz * dwidth, (float *)m->dd + i * dwidth, dwidth);
       }
       nz++;
     }
@@ -1345,7 +1345,7 @@ int detect_matrix_symmetry(matrix_t* m)
   int pattern_is_symmetric = 1;
   // TODO handle other data formats
   assert(m->data_type == REAL_DOUBLE);
-  double * const dd = m->dd;
+  double * const dd = (double *)m->dd;
   // TODO if entries were sorted this could be made more efficient
   // TODO need to ensure there are no entries for the same location? or does this matter? (probably, since these should be added together first)
   // TODO need to check for hermitian, skew symetric too
@@ -1456,7 +1456,7 @@ void printf_matrix(char const * const pre, matrix_t* m)
   convert_matrix(c, SM_COO, FIRST_INDEX_ZERO);  // TODO return value?
 
   assert(c->data_type == REAL_DOUBLE);
-  double* v = c->dd;
+  double* v = (double *)c->dd;
   if ((c->m == 0) || (c->n == 0)) {
     printf("%s is empty\n", pre);
   }
@@ -1494,8 +1494,8 @@ int results_match(matrix_t* expected_matrix, matrix_t* result_matrix, const doub
   ret = convert_matrix(result_matrix, DCOL, FIRST_INDEX_ZERO);
   assert(ret == 0);
 
-  const double* expected = expected_matrix->dd;
-  const double* result = result_matrix->dd;
+  const double* expected = (double *)expected_matrix->dd;
+  const double* result = (double *)result_matrix->dd;
   for (unsigned int i = 0; i < result_matrix->m; i++) {
     for (unsigned int j = 0; j < result_matrix->n; j++) {
 
