@@ -34,7 +34,7 @@ const char* argp_program_bug_address = PACKAGE_BUGREPORT;
  */
 error_t parse_opt(int key, char *arg, struct argp_state *state)
 {
-  struct parse_args *args = state->input;
+  struct parse_args *args = (parse_args *)state->input;
   switch (key) {
     // help, etc
     case 'h':
