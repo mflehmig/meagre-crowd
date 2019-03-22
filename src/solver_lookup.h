@@ -34,6 +34,9 @@
 #ifdef HAVE_SUPERLU_DIST
   #include "solver_superlu_dist.h"
 #endif
+#ifdef HAVE_SUPERLU
+  #include "solver_superlu.h"
+#endif
 #ifdef HAVE_PARDISO
   #include "solver_pardiso.h"
 #endif
@@ -74,7 +77,7 @@ struct  solver_properties_t {
 
 #define SOLVES_SQUARE_ONLY                          (1<<7)
 #define SOLVER_SYM_REQUIRES_DIAGONAL                (1<<8)
-// Paradiso requires the entries on the diagonal to be allocated, even if they're zero! (WSMP too)
+// Pardiso and WSMP require the entries on the diagonal to be allocated, even if they're zero!
 // This is for symmetric matrices that are not pos-def. (Pos-def matrices have entries on all diagonals.)
 
 #define SOLVES_UNSYMMETRIC                          (1<<9)
@@ -122,8 +125,8 @@ struct  solver_properties_t {
 
 static const struct solver_properties_t solver_lookup[] = {
 #ifdef HAVE_UMFPACK
-  { "umfpack", "UMFPACK", "Tim Davis et al", "University of Florida", "5.5.0", "GPL",
-    "http://www.cise.ufl.edu/research/sparse/umfpack",
+  { (char *)"umfpack", (char *)"UMFPACK", (char *)"Tim Davis et al", (char *)"University of Florida", (char *)"5.5.0", (char *)"GPL",
+    (char *)"http://www.cise.ufl.edu/research/sparse/umfpack",
     // TODO 5.5.1 is available
     &solver_init_umfpack,
     &solver_analyze_umfpack,
@@ -136,7 +139,7 @@ static const struct solver_properties_t solver_lookup[] = {
     SOLVES_RHS_DCOL | SOLVES_RHS_VECTOR_ONLY,
     SOLVER_SINGLE_THREADED_ONLY,
     // Note: Adjacent constant strings will be concatentated
-    "    * A column pre-ordering strategy for the unsymmetric-pattern multifrontal method,\n"
+    (char *)"    * A column pre-ordering strategy for the unsymmetric-pattern multifrontal method,\n"
     "      T. A. Davis, ACM Transactions on Mathematical Software,\n"
     "      vol 30, no. 2, June 2004, pp. 165-195.\n"
     "    * Algorithm 832: UMFPACK, an unsymmetric-pattern multifrontal method,\n"
@@ -151,8 +154,8 @@ static const struct solver_properties_t solver_lookup[] = {
 #endif
 
 #ifdef HAVE_MUMPS
-  { "mumps", "MUMPS", "Patrick Amestoy et al", "Université de Toulouse, et. al", "4.9.2", "public domain",
-    "http://graal.ens-lyon.fr/MUMPS",
+  { (char *)"mumps", (char *)"MUMPS", (char *)"Patrick Amestoy et al", (char *)"Université de Toulouse, et. al", (char *)"4.9.2", (char *)"public domain",
+    (char *)"http://graal.ens-lyon.fr/MUMPS",
     &solver_init_mumps,
     &solver_analyze_mumps,
     &solver_factorize_mumps,
@@ -174,9 +177,9 @@ static const struct solver_properties_t solver_lookup[] = {
 #endif
 
 #ifdef HAVE_CHOLMOD
-  { "cholmod", "CHOLMOD", "Tim Davis, William Hager", "University of Florida", "1.7.1", "LGPL",
+  { (char *)"cholmod", (char *)"CHOLMOD", (char *)"Tim Davis, William Hager", (char *)"University of Florida", (char *)"1.7.1", (char *)"LGPL",
     // version 1.7.3 is available...
-    "http://www.cise.ufl.edu/research/sparse/cholmod",
+    (char *)"http://www.cise.ufl.edu/research/sparse/cholmod",
     &solver_init_cholmod,
     &solver_analyze_cholmod,
     &solver_factorize_cholmod,
@@ -194,7 +197,7 @@ static const struct solver_properties_t solver_lookup[] = {
     // TODO is cholmod really restricted to square matrices?
     SOLVES_RHS_DCOL | SOLVES_RHS_VECTOR_ONLY, // TODO | SOLVES_RHS_CSC,
     SOLVER_SINGLE_THREADED_ONLY,
-    "    * Dynamic supernodes in sparse Cholesky update/downdate and triangular\n"
+    (char *)"    * Dynamic supernodes in sparse Cholesky update/downdate and triangular\n"
     "      solves, T. A. Davis and W. W. Hager, ACM Trans. Math. Software,\n"
     "      Vol 35, No. 4, 2009. (as CISE Tech Report)\n"
     "    * Algorithm 887: CHOLMOD, supernodal sparse Cholesky factorization and\n"
@@ -217,8 +220,8 @@ static const struct solver_properties_t solver_lookup[] = {
   // effectively single threaded
   // mostly symmetric solvers: out-of-core and in-core, multithreaded w/ CILK (SMP -- taucs.cilk.nproc=N) + 1 out-of-core unsym solver (slow?)...
   // entry added 2011-03-01, software last updated Sept, 2003 (v2.2)
-  { "taucs", "TAUCS", "Sivan Toledo", "Tel-Aviv University", "2.2", "LGPL",
-    "http://www.tau.ac.il/~stoledo/taucs/",
+  { (char *)"taucs", (char *)"TAUCS", (char *)"Sivan Toledo", (char *)"Tel-Aviv University", (char *)"2.2", (char *)"LGPL",
+    (char *)"http://www.tau.ac.il/~stoledo/taucs/",
     &solver_init_taucs,
     &solver_analyze_taucs,
     &solver_factorize_taucs,
@@ -229,7 +232,7 @@ static const struct solver_properties_t solver_lookup[] = {
     SOLVES_DATA_TYPE_REAL_DOUBLE | // TODO and REAL_COMPLEX, double and single precision, and handles hermitian
     SOLVES_RHS_DCOL | SOLVES_RHS_VECTOR_ONLY,
     0, // uses CILK? not MPI or openMP
-    "        TODO citations\n" }, // TODO
+    (char *)"        TODO citations\n" }, // TODO
 #endif
 
 #ifdef HAVE_PARDISO
@@ -262,8 +265,8 @@ static const struct solver_properties_t solver_lookup[] = {
   //   unsym: combine direct and iterative for unsym (same sparsity pattern, slowly changing system)
   //     solves first factorization to LU, then uses these as preconditioned krylov subspace iterations, switch back if not converging
   //     IPARM(4), IPARM(20)
-  { "pardiso", "Pardiso", "Olaf Schenk, Klaus Gärtner", "University Basel", "4.1.0", "academic/commercial",
-    "http://www.pardiso-project.org",
+  { (char *)"pardiso", (char *)"Pardiso", (char *)"Olaf Schenk, Klaus Gärtner", (char *)"University Basel", (char *)"4.1.0", (char *)"academic/commercial",
+    (char *)"http://www.pardiso-project.org",
     &solver_init_pardiso,
     &solver_analyze_pardiso,
     &solver_factorize_pardiso,
@@ -275,7 +278,7 @@ static const struct solver_properties_t solver_lookup[] = {
     SOLVES_DATA_TYPE_REAL_DOUBLE | // TODO and REAL_COMPLEX
     SOLVES_RHS_DCOL,
     SOLVER_SINGLE_THREADED_ONLY, // TODO FIXME (currently broken, waiting reply to support emails 2011-03-11) SOLVER_REQUIRES_OMP | SOLVER_CAN_USE_MPI,
-    "    [1] O. Schenk and K. Gärtner, Solving Unsymmetric Sparse Systems of Linear\n"
+    (char *)"    [1] O. Schenk and K. Gärtner, Solving Unsymmetric Sparse Systems of Linear\n"
     "        Equations with PARDISO, Journal of Future Generation Computer Systems,\n"
     "        20(3):475--487, 2004.\n"
     "    [2] O. Schenk and K. Gärtner, On fast factorization pivoting methods for\n"
@@ -295,8 +298,8 @@ static const struct solver_properties_t solver_lookup[] = {
 #endif
 
 #ifdef HAVE_WSMP
-  { "wsmp", "WSMP", "Anshul Gupta", "IBM/Univ. Minnesota", "11.01.19", "commercial?",
-    "http://www-users.cs.umn.edu/~agupta/wsmp.html",
+  { (char *)"wsmp", (char *)"WSMP", (char *)"Anshul Gupta", (char *)"IBM/Univ. Minnesota", (char *)"11.01.19", (char *)"commercial?",
+    (char *)"http://www-users.cs.umn.edu/~agupta/wsmp.html",
     &solver_init_wsmp,
     &solver_analyze_wsmp,
     &solver_factorize_wsmp,
@@ -308,14 +311,14 @@ static const struct solver_properties_t solver_lookup[] = {
     SOLVES_DATA_TYPE_REAL_DOUBLE | // TODO and REAL_COMPLEX -- 8Byte floating pt, 4 byte ints
     SOLVES_RHS_DCOL,
     SOLVER_CAN_USE_OMP | SOLVER_REQUIRES_MPI, // TODO: SOLVER_CAN_USE_MPI (select non-MPI solver...) // TODO non-MPI/OMP solvers (switch, based on number of threads/nodes)
-    "    [1] A. Gupta, G. Karypis, V. Kumar, A Highly Scalable Parallel Algorithm for\n"
+    (char *)"    [1] A. Gupta, G. Karypis, V. Kumar, A Highly Scalable Parallel Algorithm for\n"
     "        Sparse Matrix Factorization, IEEE Transactions on Parallel and\n"
     "        Distributed Systems, 8(5):502–520, May 1997.\n" },
 #endif
 
 #ifdef HAVE_SUPERLU_DIST
-  { "superlu", "SuperLU_DIST", "X. Sherry Li et al", "Lawrence Berkeley National Lab/Univ. of California, Berkley", "2.5", "BSD-new",
-    "http://crd.lbl.gov/~xiaoye/SuperLU/",
+  { (char *)"superlu", (char *)"SuperLU_DIST", (char *)"X. Sherry Li et al", (char *)"Lawrence Berkeley National Lab/Univ. of California, Berkley", (char *)"2.5", (char *)"BSD-new",
+    (char *)"http://crd.lbl.gov/~xiaoye/SuperLU/",
     &solver_init_superlu_dist,
     &solver_analyze_superlu_dist,
     &solver_factorize_superlu_dist,
@@ -326,7 +329,7 @@ static const struct solver_properties_t solver_lookup[] = {
     SOLVES_DATA_TYPE_REAL_DOUBLE | // TODO and COMPLEX (single and double precision)
     SOLVES_RHS_DCOL,
     SOLVER_REQUIRES_MPI, // TODO: SOLVER_CAN_USE_MPI (select non-MPI solver...) // TODO non-MPI/OMP solvers (switch, based on number of threads/nodes)
-    "    [1] Xiaoye S. Li, James W. Demmel, SuperLU_DIST: A Scalable Distributed-Memory\n"
+    (char *)"    [1] Xiaoye S. Li, James W. Demmel, SuperLU_DIST: A Scalable Distributed-Memory\n"
     "        Sparse Direct Solver for Unsymmetric Linear Systems, ACM Trans.\n"
     "        Mathematical Software, vol 29, no 2, pp110--140, June 2003\n"
     "    [2] L. Grigori, James W. Demmel, Xiaoye S. Li, Parallel Symbolic Factorization\n"
