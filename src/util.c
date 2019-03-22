@@ -11,8 +11,8 @@
 void mpi_sum(void* in, void* inout, int *len, MPI_Datatype *dptr)
 {
   assert(*dptr == MPI_DOUBLE);
-  double* const din = in;
-  double* const dinout = inout;
+  double* const din = (double *)in;
+  double* const dinout = (double *)inout;
   for (int i = 0; i < *len; i++) {
     dinout[i] += din[i];
   }
@@ -70,7 +70,7 @@ int get_omp_num_threads()
  *
  */
 void print_verbose_output(struct parse_args* args, matrix_t* A, matrix_t* b, matrix_t* expected, int c_mpi, int c_omp) {
-  const int false = 0;
+  const int err = 0;
   assert(A != NULL);
   int ierr = convert_matrix(A, SM_COO, FIRST_INDEX_ZERO);
   assert(ierr == 0);
@@ -89,7 +89,7 @@ void print_verbose_output(struct parse_args* args, matrix_t* A, matrix_t* b, mat
       sym = "hermitian";
       break;
     default:
-      assert(false);  // fell through
+      assert(err);  // fell through
   }
   if ((args->verbosity < 2) || (A->sym == SM_UNSYMMETRIC)) {
     location = "";
@@ -106,7 +106,7 @@ void print_verbose_output(struct parse_args* args, matrix_t* A, matrix_t* b, mat
         location = "";
         break;  // nothing
       default:
-        assert(false);
+        assert(err);
     }
   }
   switch (A->data_type) {
@@ -126,7 +126,7 @@ void print_verbose_output(struct parse_args* args, matrix_t* A, matrix_t* b, mat
       type = "pattern";
       break;
     default:
-      assert(false);  // fell through
+      assert(err);  // fell through
   }
 
 //      printf("Ax=b: A is %zux%zu, nz=%zu, %s%s, %s, b is %zux%zu, nz=%zu\nsolved with %s on %d core%s, %d thread%s\n",
