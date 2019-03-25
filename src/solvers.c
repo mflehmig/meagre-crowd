@@ -353,7 +353,7 @@ void printf_solvers(const unsigned int verbosity)
   for (i = 0; solver_lookup[i].shortname != NULL; i++) {
     ;
   }
-  size_t* const l = malloc(i * sizeof(size_t));
+  size_t* const l = (size_t *)malloc(i * sizeof(size_t));
 
   for (int i = 0; solver_lookup[i].shortname != NULL; i++) {
     size_t ll = strlen(solver_lookup[i].shortname);
@@ -363,12 +363,12 @@ void printf_solvers(const unsigned int verbosity)
   }
   for (int i = 0; solver_lookup[i].shortname != NULL; i++) {
     printf("  %s", solver_lookup[i].shortname);
-    for (int j = 0; j < max_shortname_len - l[i]; j++)
+    for (unsigned int j = 0; j < max_shortname_len - l[i]; j++)
       printf(" ");
     printf("    %s %s (%s, %s)\n", solver_lookup[i].name, solver_lookup[i].version, solver_lookup[i].author,
            solver_lookup[i].license);
     if (verbosity >= 1) {  // organization, references
-      for (int j = 0; j < max_shortname_len; j++)
+      for (unsigned int j = 0; j < max_shortname_len; j++)
         printf(" ");
       printf("      %s, %s\n", solver_lookup[i].organization, solver_lookup[i].url);
     }
@@ -390,22 +390,22 @@ int solver_can_do(const int solver, matrix_t* A, matrix_t* b)
   return 1;  // TODO something more clever, like a real answer
 }
 
-inline int solver_uses_mpi(const int solver)
+/*inline*/ int solver_uses_mpi(const int solver)
 {
   return ((solver_lookup[solver].multicore & SOLVER_CAN_USE_MPI) != 0);
 }
 
-inline int solver_requires_mpi(const int solver)
+/*inline*/ int solver_requires_mpi(const int solver)
 {
   return ((solver_lookup[solver].multicore & SOLVER_REQUIRES_MPI) != 0);
 }
 
-inline int solver_uses_omp(const int solver)
+/*inline*/ int solver_uses_omp(const int solver)
 {
   return ((solver_lookup[solver].multicore & SOLVER_CAN_USE_OMP) != 0);
 }
 
-inline int solver_requires_omp(const int solver)
+/*inline*/ int solver_requires_omp(const int solver)
 {
   return ((solver_lookup[solver].multicore & SOLVER_REQUIRES_OMP) != 0);
 }
@@ -448,7 +448,7 @@ void solver_solve(solver_state_t* s, matrix_t* A, matrix_t* b, matrix_t* x)
 // initialize and finalize the solver state
 solver_state_t* solver_init(const int solver, const int verbosity, const int mpi_rank, perftimer_t* timer)
 {
-  solver_state_t* s = malloc(sizeof(solver_state_t));
+  solver_state_t* s = (solver_state_t *)malloc(sizeof(solver_state_t));
   assert(s != NULL);
 
   // configure state
@@ -588,7 +588,7 @@ void solver_evaluate(solver_state_t* s, matrix_t* b, matrix_t* x)
           // continue with the monkey-ing with pointers (it converts
           // to the correct index-ing and changes from DROW -> DCOL)
 
-          double* dd = bb.dd;
+          double* dd = (double *)bb.dd;
           dd += bb.m;  // advance by a column
           bb.dd = dd;
         }
@@ -608,7 +608,7 @@ void solver_evaluate(solver_state_t* s, matrix_t* b, matrix_t* x)
           x->dd = realloc(x->dd, (x->m * (x->n + xx.n)) * sizeof(double));
           assert(x->dd != NULL);  // realloc failure
           // and copy the data into the newly resized buffer
-          memcpy(x->dd + (x->m * x->n) * sizeof(double), xx.dd, x->m * xx.n * sizeof(double));
+          memcpy((float *)x->dd + (x->m * x->n) * sizeof(double), xx.dd, x->m * xx.n * sizeof(double));
           x->n += xx.n;  // increment the column count
         }
         clear_matrix(&xx);  // free any memory we accumulated from the solver
