@@ -745,7 +745,7 @@ int writemm(char const* const filename, matrix_t* AA, char const * const comment
 }
 
 // returns number of rows in matrix A
-inline unsigned int matrix_rows(const matrix_t* const A)
+/*inline*/ unsigned int matrix_rows(const matrix_t* const A)
 {
     if (A == NULL)
         return 0;
