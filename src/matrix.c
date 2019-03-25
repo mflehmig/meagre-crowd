@@ -115,7 +115,7 @@ static int _qsort_coo_cmp_cols_rows(const void* a, const void* b)
   }
 }
 
-inline matrix_t* malloc_matrix()
+/*inline*/ matrix_t* malloc_matrix()
 {
   matrix_t* m = (matrix_t *)malloc(sizeof(matrix_t));
   // make this safe to free_matrix() whatever comes out of this
@@ -138,7 +138,7 @@ inline void free_matrix(matrix_t* m)
   }
 }
 
-inline void clear_matrix(matrix_t* m)
+/*inline*/ void clear_matrix(matrix_t* m)
 {
   assert(m != NULL);
   free(m->dd);
