@@ -28,7 +28,7 @@
 #include <bebop/util/init.h>
 #include <bebop/util/enumerations.h>
 #include <bebop/smc/sparse_matrix.h>
-#include <bebop/smc/sparse_matrix_ops.h> // load_sparse_matrix
+#include <bebop/smc/sparse_matrix_ops.h> // save_sparse_matrix
 #include <bebop/smc/coo_matrix.h> // convert to coo
 #include <bebop/smc/csc_matrix.h> // convert to csc
 
