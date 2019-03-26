@@ -84,6 +84,56 @@ ACXX_MPI
  AC_PROG_CPP([$MPICXX])
 # Checks for libraries.
 
+
+
+
+dnl this isn't most beautiful because MC_WITH_LIB already checks for the command line argument and sets HAVE_SUPERLU_DIST
+AC_ARG_WITH([superlu_dist], [AS_HELP_STRING([--with-superlu_dist])],
+            [want_superlu_dist=yes],
+            [want_superlu_dist=no]
+           )
+if test "x$want_superlu_dist" = xyes; then
+  AC_MSG_NOTICE([Hey, your initial libs are: $LIBS])
+  AC_MSG_NOTICE([Hei, I want superlu_dist])
+  CC=mpicxx
+  CXX=mpicxx              
+  AC_SEARCH_LIBS([metis_free], [metis], , AC_MSG_ERROR([missing METIS library - needed by superlu_dist]))
+  AC_SEARCH_LIBS([parmetis_v3_nodend], [parmetis], , AC_MSG_ERROR([missing parMETIS library - needed by superlu_dist]))
+  AC_SEARCH_LIBS([mm_strdup], [CombBLAS], , AC_MSG_ERROR([missing Combinatorial BLAS CombBLAS library- needed by superlu_dist]))
+#  MC_WITH_LIB([SUPERLU_DIST], [superlu_gridinit],[superlu_dist], , [-lCombBLAS -lopenblas -lmetis -lparmetis])
+#  AC_CHECK_HEADERS([superlu_ddefs.h])
+  AC_MSG_NOTICE([Hey, your libs are: $LIBS])
+else
+  AC_MSG_NOTICE([Hei, I don't want superlu_dist])
+fi
+  #             [
+#  CC=mpicxx
+#  CXX=mpicxx              
+#  AC_SEARCH_LIBS([metis_free], [metis], , AC_MSG_ERROR([missing METIS library - needed by superlu_dist]))
+#  AC_SEARCH_LIBS([parmetis_v3_nodend], [parmetis], , AC_MSG_ERROR([missing parMETIS library - needed by superlu_dist]))
+#  AC_SEARCH_LIBS([mm_strdup], [CombBLAS], , AC_MSG_ERROR([missing Combinatorial BLAS CombBLAS library- needed by superlu_dist]))
+#  MC_WITH_LIB([SUPERLU_DIST], [superlu_gridinit],[superlu_dist], , [-lCombBLAS -lopenblas -lmetis -lparmetis])
+#  AC_CHECK_HEADERS([superlu_ddefs.h])
+#              ], 
+#             [
+#  HAVE_COMBBLAS=no
+#  HAVE_METIS=no
+#  HAVE_PARMETIS=no
+#  HAVE_SUPERLU_DIST=no
+#              ])
+have_superlu_dts=no
+AM_CONDITIONAL(HAVE_SUPERLU_DIST,[test "x$have_superlu_dist" = "xyes"])
+
+
+
+
+
+
+
+
+
+
+
 # BeBOP: matrix market file format
 AC_SEARCH_LIBS([load_sparse_matrix], [sparse_matrix_converter],,AC_MSG_ERROR([missing BeBOP sparse matrix I/O library]))
 # BeBOP: some OSes don't see bebop_util.so properly even though it's marked as a dependency of sparse_matrix_converter.so
@@ -174,39 +224,22 @@ MC_WITH_LIB([MUMPS],   [dmumps_c],      [dmumps])
 #check for umfpack
 MC_WITH_LIB([UMFPACK], [umfpack_di_symbolic], [umfpack])
 dnl might not be needed, if already included through another solver
-dnl MC_WITH_LIB([CHOLMOD], [cholmod_solve], [cholmod])
+MC_WITH_LIB([CHOLMOD], [cholmod_solve], [cholmod])
 # check for taucs
 # has a 30 day license!
 # TODO TAUCS depends on CILK?
 MC_WITH_LIB([TAUCS],   [taucs_linsolve],[taucs])
-
 # check for SuperLU_dist
-dnl this isn't most beautiful because MC_WITH_LIB already checks for the command line argument and sets HAVE_SUPERLU_DIST
-AC_ARG_WITH ([superlu_dist], [AS_HELP_STRING([--with-readline])],
-             [
-  CC=mpicxx
-  CXX=mpicxx              
-  AC_SEARCH_LIBS([metis_free], [metis], , AC_MSG_ERROR([missing METIS library - needed by superlu_dist]))
-  AC_SEARCH_LIBS([parmetis_v3_nodend], [parmetis], , AC_MSG_ERROR([missing parMETIS library - needed by superlu_dist]))
-  AC_SEARCH_LIBS([mm_strdup], [CombBLAS], , AC_MSG_ERROR([missing Combinatorial BLAS CombBLAS library- needed by superlu_dist]))
-  MC_WITH_LIB([SUPERLU_DIST], [superlu_gridinit],[superlu_dist], , [-lCombBLAS -lopenblas -lmetis -lparmetis])
-  AC_CHECK_HEADERS([superlu_ddefs.h])
-              ], 
-             [
-  HAVE_COMBBLAS=no
-  HAVE_METIS=no
-  HAVE_PARMETIS=no
-  HAVE_SUPERLU_DIST=no
-              ])
-
+## check for superlu
 AC_LANG_PUSH(C++)
 CXXFLAGS="$CXXFLAGS -fopenmp" # don't have to be saved, they are substituted earlier
 MC_WITH_LIB([SUPERLU], [sgssvx],[superlu])
 AC_LANG_POP()
-
+# check for pardiso
 # TODO (others: gfortran, pthread, m?)     AX_OPENMP([ACTION-IF-FOUND[, ACTION-IF-NOT-FOUND]])
 # TODO FIXME any MC_WITH_LIBS that come after pardiso is detected will fail if they don't have $OPENMP_CFLAGS since the .so doesn't have the dependency it needs
 MC_WITH_LIB([PARDISO], [pardisoinit],   [pardiso], [[AC_OPENMP AX_PTHREAD AC_F77_LIBRARY_LDFLAGS]], $FLIBS $OPENMP_CFLAGS $LIB_PTHREAD)
+# check for wsmp
 MC_WITH_LIB([WSMP],    [pwgsmp_],       [pwsmp],   [[AC_OPENMP AX_PTHREAD AC_F77_LIBRARY_LDFLAGS]], $FLIBS $OPENMP_CFLAGS $LIB_PTHREAD)
 
 # Checks for header files.

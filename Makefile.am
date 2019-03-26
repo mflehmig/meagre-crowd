@@ -44,9 +44,9 @@ meagre_crowd_SOURCES += src/solver_umfpack.c
 BUILT_TESTS += tests/hello-umfpack
 endif
 
-#if HAVE_CHOLMOD
-#meagre_crowd_SOURCES += src/solver_cholmod.c
-#endif
+if HAVE_CHOLMOD
+meagre_crowd_SOURCES += src/solver_cholmod.c
+endif
 
 if HAVE_TAUCS
 meagre_crowd_SOURCES += src/solver_taucs.c

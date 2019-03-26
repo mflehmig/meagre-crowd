@@ -4,7 +4,7 @@ Compiling and Installing
 
 If checking out code from a repository, run
 
-  ./autogen or bash autogen
+  ./autogen or bash autogen [1]
 
 to regenerate the configure scripts. You will need m4 and the autoconf tools installed to
 regenerate these scripts. If these are not available then download the tar ball
@@ -19,24 +19,32 @@ Invoke with bash
 to list all possible options. Decide which solvers to install (mumps, umfpack, pardiso, wsmp, superlu), as you probably don't need all of them. Install the dependencies needed by your solvers. A proper dependency system via Gentoo, Ubuntu, or RedHat should be able to provide most of the dependencies.
 You can find a list of needed dependencies for each solver in solvers_dependencis.csv.
 
-If you have all needed dependencies for meagre-crowd already installed, make sure to set the paths. Get_dependencies installs all programs in the base directory of meagre-crowd in a folder called just as the system you're working on (<machine>).
-The -L and -I directories should be
-current locations for the files, while the -rpath should
-be the final installed location.
+If you have all needed dependencies for meagre-crowd already installed, make sure to set the compile and linkig paths. 
+The -L and -I directories should be current locations for the files, while the -rpath should be the final install location.
+You need to prepend them as CFLAGS, CPPFLAGS and LDFLAGS to your ./configure invocation.
 
-export LDFLAGS="-L$PWD/$(gcc -dumpmachine)/lib -Wl,-rpath,$PWD/$(gcc -dumpmachine)/lib" 
-export CPPFLAGS="-I$PWD/$(gcc -dumpmachine)/include"
-export CFLAGS="-I$PWD/$(gcc -dumpmachine)/include"
+If you used get_dependencies, all programs where installed in the base directory of meagre-crowd in a folder called just as the system you're working on $(gcc -dumpmachine). You can then use these flags:
+
+LDFLAGS="-L$PWD/$(gcc -dumpmachine)/lib -Wl,-rpath,$PWD/$(gcc -dumpmachine)/lib" 
+CPPFLAGS="-I$PWD/$(gcc -dumpmachine)/include"
+CFLAGS="-I$PWD/$(gcc -dumpmachine)/include"
 
 Run the following commands to compile this program
   
-  ./configure (--prefix=<custom-install-location> --enable-debug=yes --with-all-solvers)
+  LDFLAGS="" CFLAGS="" CPPFLAGS="" ./configure (--prefix=<custom-install-location> --enable-debug=yes --with-all-solvers)
   make
   make install
 
 to have the files installed in a different location from the
 default /usr/local (i.e. if you don't have root permission
 and would like to install it in your home directory) use the --prefix during configure.
+
+[1] Sometimes, this leads to an error:
+      error: possibly undefined macro: AC_[MACRO]
+      If this token and others are legitimate, please use m4_pattern_allow.
+      See the Autoconf documentation.
+      /usr/bin/autoconf failed with exit status: 1
+I have neither found the cause nor the solution for it. Invoking "bash autogen" several times hopefully also solves the problem for you.
 
 Running the Tests
 -----------------
