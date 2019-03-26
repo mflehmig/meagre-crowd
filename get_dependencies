@@ -1053,7 +1053,8 @@ function build_matio() {
   cd ${S}/matio/src 
   # don't quote paths with '...' 
   bash ../libtool --mode=install install -c libmatio.la ${INSTALL_LIB_DIR} &> /dev/null || err matio "installing libmatio.la"
-  install -c .libs/libmatio.so.4.4.2 ${INSTALL_LIB_DIR}/libmatio.so.4.4.2  &> /dev/null || err matio "install libmatio.so"
+  ../libtool --finish ${INSTALL_LIB_DIR} &> /dev/null || err matio "install libmatio.so"
+  install -c .libs/libmatio.so.9.0.0 ${INSTALL_LIB_DIR}/libmatio.so.9.0.0  &> /dev/null || err matio "install libmatio.so"
   install -c -m 644 matio.h ${INSTALL_INC_DIR}  &> /dev/null || err matio "installing matio.h"
   install -c -m 644 matio_pubconf.h ${INSTALL_INC_DIR}  &> /dev/null || err matio "installing matio_pubconf.h"
   mkdir -p ${INSTALL_BIN_DIR}  &> /dev/null || err matio "installing - can't make dir"
