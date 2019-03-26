@@ -109,6 +109,9 @@ AC_ARG_WITH(mat,
  AM_CONDITIONAL([HAVE_MATIO],[test "x$have_matio" = "xyes"])
  AC_SUBST([have_matio])
 
+# search for a blas (required)
+AC_SEARCH_LIBS([dgemm_], [blas,openblas], , AC_MSG_ERROR([missing a BLAS library]))
+
 AC_ARG_WITH(all-solvers, AS_HELP_STRING(--with-all-solvers, Force presence of all solvers))
 
 m4_define([MC_WITH_LIB],[
@@ -175,43 +178,27 @@ dnl MC_WITH_LIB([CHOLMOD], [cholmod_solve], [cholmod])
 MC_WITH_LIB([TAUCS],   [taucs_linsolve],[taucs])
 
 # checks for SuperLU_dist
-if not --without-superlu_dist
-  1. blas
-  2. metis
+dnl this isn't most beautiful because MC_WITH_LIB already checks for the command line argument
+AC_ARG_WITH ([superlu_dist], [AS_HELP_STRING([--with-readline])],
+             [
   CC=mpicxx
-  CXX=mpicxx
-  3. parmetis
-  4. combblas
-  5. superlu_dist
-
-else
-  nüscht
-fi
+  CXX=mpicxx              
+  AC_SEARCH_LIBS([metis_free], [metis], , [AC_MSG_ERROR([missing METIS library])])
+  AC_SEARCH_LIBS([parmetis_v3_nodend], [parmetis], , [AC_MSG_ERROR([missing parMETIS library])])
+  AC_SEARCH_LIBS([mm_strdup], [CombBLAS], , [AC_MSG_ERROR([missing Combinatorial BLAS CombBLAS library])])
+  MC_WITH_LIB([SUPERLU_DIST], [superlu_gridinit],[superlu_dist], , [-lCombBLAS -lopenblas -lmetis -lparmetis])
+  AC_CHECK_HEADERS([superlu_ddefs.h])
+              ], 
+             [
+  HAVE_COMBBLAS=no
+  HAVE_METIS=no
+  HAVE_PARMETIS=no
+              ])
 
 AC_LANG_PUSH(C++)
 CXXFLAGS="$CXXFLAGS -fopenmp" # don't have to be saved, they are substituted earlier
 MC_WITH_LIB([SUPERLU], [sgssvx],[superlu])
-MC_WITH_LIB([SUPERLU_DIST], [superlu_gridinit],[superlu_dist], , [-lCombBLAS -lopenblas -lmetis -lparmetis])
 AC_LANG_POP()
-
-# links needed libraries for superlu_dist
-if test "x$have_superlu_dist" = "xyes"; then
-  CC=mpicxx
-  CXX=mpicxx
-  AC_MSG_NOTICE([Hello, libs are: $LIBS .])
-  AC_SEARCH_LIBS([dgemm_], [blas,openblas], , AC_MSG_ERROR([missing a BLAS library]))
-  AC_SEARCH_LIBS([metis_free], [metis], , AC_MSG_ERROR([missing METIS library]))
-  AC_SEARCH_LIBS([parmetis_v3_nodend], [parmetis], , AC_MSG_ERROR([missing parMETIS library]))
-  AC_SEARCH_LIBS([mm_strdup], [CombBLAS], , AC_MSG_ERROR([missing Combinatorial BLAS CombBLAS library]))
-  AC_CHECK_HEADERS([superlu_ddefs.h])
-  AC_MSG_NOTICE([Hello, libs are: $LIBS .])
-else
-  HAVE_COMBBLAS=no
-  HAVE_OPENBLAS=no
-  HAVE_METIS=no
-  HAVE_PARMETIS=no
-  AC_MSG_NOTICE([Hello, libs are: $LIBS .])
-fi
 
 # TODO (others: gfortran, pthread, m?)     AX_OPENMP([ACTION-IF-FOUND[, ACTION-IF-NOT-FOUND]])
 # TODO FIXME any MC_WITH_LIBS that come after pardiso is detected will fail if they don't have $OPENMP_CFLAGS since the .so doesn't have the dependency it needs
@@ -238,8 +225,7 @@ AC_CONFIG_TESTDIR([.],[.:tests])
 AC_CONFIG_FILES([atlocal])
 
 AC_MSG_CHECKING(for beer in the fridge)
-  AC_MSG_RESULT(all systems go)
-
+AC_MSG_RESULT(all systems go)
 
 AC_PATH_PROG(DOT, dot)
 if test ! -z "$DOT"; then
@@ -264,9 +250,9 @@ AC_SUBST(DEBUG)
 AC_MSG_RESULT([])
 AC_MSG_RESULT([   Meagre-Crowd Configuration Summary       ])
 AC_MSG_RESULT([==============================================================])
-AC_MSG_RESULT([           C Compiler: $CC])
+AC_MSG_RESULT([               C Compiler: $CC])
 dnl AC_MSG_RESULT([     Fortran Compiler: $FC])
-AC_MSG_RESULT([               CFLAGS: $CFLAGS])
+AC_MSG_RESULT([                   CFLAGS: $CFLAGS])
 dnl AC_MSG_RESULT([              FCFLAGS: $FCFLAGS])
 dnl AC_MSG_RESULT([            FCLDFLAGS: $FCLDFLAGS])
 dnl AC_MSG_RESULT([     Shared Libraries: $enable_shared])
@@ -279,6 +265,10 @@ AC_MSG_RESULT([                  DOT: $have_dot])
 AC_MSG_RESULT([])
 AC_MSG_RESULT([Packages --------------------------------------------])
 AC_MSG_RESULT([                MatIO: $have_matio])
+AC_MSG_RESULT([             CombBLAS: $have_combblas])
+AC_MSG_RESULT([                BeBOP: $have_bebop])
+AC_MSG_RESULT([                METIS: $have_metis ])
+AC_MSG_RESULT([             ParMETIS: $have_parmetis ])
 AC_MSG_RESULT([])
 AC_MSG_RESULT([Solvers  --------------------------------------------])
 AC_MSG_RESULT([              UMFPACK: $have_umfpack])
