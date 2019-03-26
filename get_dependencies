@@ -517,11 +517,11 @@ function build_combblas() {
 cp -f ${S}/combblas/CombBLAS_${COMBBLAS_VERSION}/_install/lib/*.so ${INSTALL_LIB_DIR} &> /dev/null || err combblas "install failed (copying dynamic libraries)"
   cp -rf ${S}/combblas/CombBLAS_${COMBBLAS_VERSION}/_install/include/* ${INSTALL_INC_DIR} &> /dev/null || err combblas "install failed (copying dynamic libraries)"
   # fix some paths for SuperLU
-  mv -f ${INSTALL_INC_DIR}/psort ${INSTALL_INC_DIR}/CombBLAS || err combblas "install failed (copying headers)"
-  mv -f ${INSTALL_INC_DIR}/usort ${INSTALL_INC_DIR}/CombBLAS || err combblas "install failed (copying headers)"
-  mv -f ${INSTALL_INC_DIR}/Tommy ${INSTALL_INC_DIR}/CombBLAS || err combblas "install failed (copying headers)"
-  mv -f ${INSTALL_INC_DIR}/graph500 ${INSTALL_INC_DIR}/CombBLAS || err combblas "install failed (copying headers)"
-  mv -f $S/combblas/CombBLAS_${COMBBLAS_VERSION}/BipartiteMatchings ${INSTALL_INC_DIR}/CombBLAS &> /dev/null || err combblas "install failed (copying headers)"
+  mv -f ${INSTALL_INC_DIR}/psort ${INSTALL_INC_DIR}/CombBLAS || info "combblas - install (copying headers) - you probably already installed CombBLAS"
+  mv -f ${INSTALL_INC_DIR}/usort ${INSTALL_INC_DIR}/CombBLAS || info "combblas - install (copying headers) - you probably already installed CombBLAS"
+  mv -f ${INSTALL_INC_DIR}/Tommy ${INSTALL_INC_DIR}/CombBLAS || info "combblas - install (copying headers) - you probably already installed CombBLAS"
+  mv -f ${INSTALL_INC_DIR}/graph500 ${INSTALL_INC_DIR}/CombBLAS || info "combblas - install (copying headers) - - you probably already installed CombBLAS"
+  mv -f $S/combblas/CombBLAS_${COMBBLAS_VERSION}/BipartiteMatchings ${INSTALL_INC_DIR}/CombBLAS &> /dev/null || info "combblas - install (copying headers) - you probably already installed CombBLAS"
 } # /build_combblas
 
 # == ORDERINGS BUILD FUNCTIONS ==
