@@ -452,7 +452,7 @@ int cmp_matrix(matrix_t* a, matrix_t* b)
 struct sparse_matrix_t* _bebop_input(matrix_t* m, enum sparse_matrix_storage_format_t f);
 struct sparse_matrix_t* _bebop_input(matrix_t* m, enum sparse_matrix_storage_format_t f)
 {
-  struct sparse_matrix_t* A = (sparse_matrix_t *)malloc(sizeof(struct sparse_matrix_t));
+  struct sparse_matrix_t* A = (struct sparse_matrix_t *)malloc(sizeof(struct sparse_matrix_t));
 
   enum value_type_t v = REAL;
   switch (m->data_type) {
