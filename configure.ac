@@ -175,6 +175,19 @@ dnl MC_WITH_LIB([CHOLMOD], [cholmod_solve], [cholmod])
 MC_WITH_LIB([TAUCS],   [taucs_linsolve],[taucs])
 
 # checks for SuperLU_dist
+if not --without-superlu_dist
+  1. blas
+  2. metis
+  CC=mpicxx
+  CXX=mpicxx
+  3. parmetis
+  4. combblas
+  5. superlu_dist
+
+else
+  nüscht
+fi
+
 AC_LANG_PUSH(C++)
 CXXFLAGS="$CXXFLAGS -fopenmp" # don't have to be saved, they are substituted earlier
 MC_WITH_LIB([SUPERLU], [sgssvx],[superlu])
@@ -185,16 +198,19 @@ AC_LANG_POP()
 if test "x$have_superlu_dist" = "xyes"; then
   CC=mpicxx
   CXX=mpicxx
-  AC_SEARCH_LIBS([dgemm_], [openblas], , AC_MSG_ERROR([missing a BLAS library]))
+  AC_MSG_NOTICE([Hello, libs are: $LIBS .])
+  AC_SEARCH_LIBS([dgemm_], [blas,openblas], , AC_MSG_ERROR([missing a BLAS library]))
   AC_SEARCH_LIBS([metis_free], [metis], , AC_MSG_ERROR([missing METIS library]))
   AC_SEARCH_LIBS([parmetis_v3_nodend], [parmetis], , AC_MSG_ERROR([missing parMETIS library]))
   AC_SEARCH_LIBS([mm_strdup], [CombBLAS], , AC_MSG_ERROR([missing Combinatorial BLAS CombBLAS library]))
   AC_CHECK_HEADERS([superlu_ddefs.h])
+  AC_MSG_NOTICE([Hello, libs are: $LIBS .])
 else
   HAVE_COMBBLAS=no
   HAVE_OPENBLAS=no
   HAVE_METIS=no
   HAVE_PARMETIS=no
+  AC_MSG_NOTICE([Hello, libs are: $LIBS .])
 fi
 
 # TODO (others: gfortran, pthread, m?)     AX_OPENMP([ACTION-IF-FOUND[, ACTION-IF-NOT-FOUND]])

@@ -8,13 +8,13 @@
 # bash get_dependencies <target1> <target2> ... <targetn>
 # adapt the variables below to your custom.
 #
-# Script won't install a target if a directory with the name of <target> already exists 
-# in the base directory (= the directory you found this script in). 
+# Script won't install a target if a directory with the name of <target> already exists
+# in the base directory (= the directory you found this script in).
 #
 # How to go about how to invoke this script:
 # 1. choose the solvers you want to use with meagre-crowd
 # 2. check which dependencies you need in solvers_dependencies.csv
-# 3. decide which dependencies you want to install locally (with this script) and 
+# 3. decide which dependencies you want to install locally (with this script) and
 #    for which the system install is ok
 # 4. you always have to install bebop and matio
 # 5. adapt the variables (versions) below
@@ -28,17 +28,17 @@
 PARALLEL_MAKE_DISABLED="no" # please choose one!
 
 # == custom lib search path ==
-# This script looks in common paths for a dependency. If it can't find your 
+# This script looks in common paths for a dependency. If it can't find your
 # (probably manual?) install, set this.
 # customsearchpath="<path1>
 #          <path2"
 customsearchpath=""
 
-# == Select implementations. == 
+# == Select implementations. ==
 # These variables are then used to choose a build. You can only build the libs that
 # are listed behind. If you don't intend to build a
 # library, you can safely skip the name. If you need to use one of these libs
-# as a dependency for a target and have it already built, you can set another name, 
+# as a dependency for a target and have it already built, you can set another name,
 # it doesn't need to be listed behind.
 MPI="" # mpich2/mpich1/openmpi or local or skip
 BLAS="" # netlib/atlas/local
@@ -79,13 +79,13 @@ UMFPACK_VER="5.1.2-2"
 TAUCS_VER="2.2"
 SUPERLU_VER="5.2.1"
 COMBBLAS_VER="16.2"
-SUPERLU_DIST_VERSION="6.1.0"
+SUPERLU_DIST_VERSION="6.1.1"
 PARDISO_VER=""
 
 # === !!UNLESS YOU WANT TO EDIT THE SCRIPT, DON'T CHANGE ANYTHING BELOW!! ===
 #
-# Editing this file feels like looking for that very important formula in a book 
-# without an index. That's horribly unkind, so if you want to edit it, here's a 
+# Editing this file feels like looking for that very important formula in a book
+# without an index. That's horribly unkind, so if you want to edit it, here's a
 # quick help text:
 #
 # x - change here if you intend to add a new target
@@ -100,7 +100,7 @@ PARDISO_VER=""
 #    * I/O tools build functions (x - depending on the kind of software you add)
 # * Main x
 #
-# The headings work like this: 
+# The headings work like this:
 # === first level
 # ==  second level
 # =   third level
@@ -110,7 +110,7 @@ PARDISO_VER=""
 
 # === FUNCTION DECLARATIONS ===
 # == help ==
-# This function displays a help text. 
+# This function displays a help text.
 function help() {
   echo "$(basename $0) [options]"
   echo "  all: ${TARGETS}"
@@ -126,7 +126,7 @@ function err() {
   exit 1
 } # /err
 
-# == info == 
+# == info ==
 #This function prints information in a nice format. $: info message
 function info() {
   echo "* $*"
@@ -158,24 +158,24 @@ function a2so() {
   rm -rf $F-d
 } # /a2so
 
-# == find_library == This function looks in previously set search paths for a library ($1). Provide library without .so or lib. 
+# == find_library == This function looks in previously set search paths for a library ($1). Provide library without .so or lib.
 function find_library() {
   libfound_err=1
   libname=$1
   for path in $libsearchpath; do
-    if [ -e "$path/lib${libname}.so" ] || [ -e "$path/lib${libname}.a" ]; then # TODO make it so that *.so.2 is found as well 
+    if [ -e "$path/lib${libname}.so" ] || [ -e "$path/lib${libname}.a" ]; then # TODO make it so that *.so.2 is found as well
       libpath="$path"
       libfound_err=0
-    fi   
+    fi
   done
 
   # check alternate names
-  if [[ "$libname" = "blas" ]]; then find_library openblas; fi  
+  if [[ "$libname" = "blas" ]]; then find_library openblas; fi
   if [[ "$libname" = "scalapack" ]]; then find_library scalapack-openmpi; fi
   if [[ "$libname" = "ptscotch" ]]; then find_library scotch; fi
   if [[ "$libname" = "combblas" ]]; then find_library CombBLAS; fi
-  
-  if [ "$libfound_err" -eq "1" ]; then info "  lib$libname not found"; fi  
+
+  if [ "$libfound_err" -eq "1" ]; then info "  lib$libname not found"; fi
 } # /find_library
 
 # == find_header == This function looks for a header ($1) in previously set search paths.
@@ -319,7 +319,7 @@ info "  using ${MPI_PATH}/lib/libmpi.so"
 function build_openblas() { # TODO
     echo "openblas is not implemented yet"
   } # /build_openblas
- 
+
 # = build_cilk =
 function build_cilk() {
   info "CILK"
@@ -577,7 +577,7 @@ find_library ccolamd
 CCOLAMD_DLIB="-L$libpath -lccolamd"
 info "  using $libpath/libccolamd.so"
 } # /build_ccolamd
- 
+
 # = build_colamd =
 function build_colamd() {
   info "COLAMD"
@@ -677,14 +677,14 @@ info "  using $libpath/libptscotch.so"
 function build_cholmod() {
 
   info "CHOLMOD"
-  
+
   # unpack archives
   get_and_unpack cholmod http://www.cise.ufl.edu/research/sparse/cholmod/CHOLMOD-${CHOLMOD_VER}.tar.gz
   get_and_unpack cholmod http://www.cise.ufl.edu/research/sparse/UFconfig/UFconfig-${UFPACK_VER}.tar.gz
 
   info "  config"
 
-  # cholmod needs metis 
+  # cholmod needs metis
   find_library metis
   metis_libpath=$libpath
 
@@ -948,12 +948,12 @@ function build_superlu_dist() {
   cp $INSTALL_INC_DIR/CombBLAS/BipartiteMatchings/*.h $superlu_dist_root/SRC
   sed -i 's/-std=c++11/-std=c++14/g' $superlu_dist_root/CMakeLists.txt # set std to c++14
   sed -i 's/CMAKE_CXX_STANDARD 11/CMAKE_CXX_STANDARD 14/g' $superlu_dist_root/CMakeLists.txt # set std to c++14
-  
+
   echo "  configuring .."
   # parmetis
   find_header parmetis
   parmetis_incpath=$incpath
-  find_library parmetis 
+  find_library parmetis
   parmetis_libpath=$libpath
 
   # CombBLAS
@@ -962,7 +962,7 @@ function build_superlu_dist() {
   combblas_incpath=$incpath
   find_library combblas
   combblas_libpath=$libpath
-  
+
   # metis
   find_header metis
   metis_incpath=$incpath
@@ -1050,8 +1050,8 @@ function build_matio() {
   # info "testing software ..."
   # make check &> /dev/null || err matio "check test failed"
   info "  installing ..."
-  cd ${S}/matio/src 
-  # don't quote paths with '...' 
+  cd ${S}/matio/src
+  # don't quote paths with '...'
   bash ../libtool --mode=install install -c libmatio.la ${INSTALL_LIB_DIR} &> /dev/null || err matio "installing libmatio.la"
   ../libtool --finish ${INSTALL_LIB_DIR} &> /dev/null || err matio "install libmatio.so"
   install -c .libs/libmatio.so.9.0.0 ${INSTALL_LIB_DIR}/libmatio.so.9.0.0  &> /dev/null || err matio "install libmatio.so"
@@ -1077,7 +1077,7 @@ function build_matio() {
 TARGETS="mpi blas lapack blacs scalapack amd camd ccolamd colamd metis scotch cholmod mumps umf pack pardiso wsmp taucs superlu bebop matio superlu_dist cblas openblas combblas"
 
 # == SET NEEDED PATHS ==
-# Setting some useful paths: $PWD, $MACHINE, $libsearchpath 
+# Setting some useful paths: $PWD, $MACHINE, $libsearchpath
 # all are needed by functions
 S=${PWD}
 MACHINE=$(gcc -dumpmachine)
@@ -1102,7 +1102,7 @@ commonpaths="/usr/local/lib
 /usr/lib
 /usr/lib64
 /lib
-/lib64 
+/lib64
 $customsearchpath" # ^ these paths are proposed by POSIX
 for path in $commonpaths; do
   if [ -d $path ]; then # only add them if they exist
@@ -1143,22 +1143,22 @@ while [ $# != 0 ]; do
   fi
   for target in ${targets[@]}; do
     case $target in
-      "mpi") 
+      "mpi")
         build_mpi
         ;;
-      "blas") 
+      "blas")
         build_blas
         ;;
-      "lapack") 
+      "lapack")
         build_lapack
         ;;
-      "blacs") 
+      "blacs")
         build_blacs
         ;;
-      "scalapack") 
+      "scalapack")
         build_scalapack
         ;;
-      "amd") 
+      "amd")
         build_amd
         ;;
       "camd") build_amd;; # is included in amd
@@ -1167,7 +1167,7 @@ while [ $# != 0 ]; do
       "colamd") build_colamd;;
       "metis") build_metis;;
       "scotch") build_scotch;;
-      "cholmod") 
+      "cholmod")
         build_cholmod
         ;;
       "mumps") build_mumps;;
@@ -1177,7 +1177,7 @@ while [ $# != 0 ]; do
       "taucs")
         build_taucs
         ;;
-      "superlu") 
+      "superlu")
         build_superlu
         ;;
       "bebop") build_bebop;;
@@ -1187,10 +1187,10 @@ while [ $# != 0 ]; do
       "cblas") build_cblas;;
       "cilk") build_cilk;;
       "clean") echo "cleaning..." && rm -rf ${TARGETS} && exit 0;;
-      "distclean") 
+      "distclean")
         echo "cleaning..." && rm -rf ${TARGETS} && rm -rf ${INSTALL_BASE_DIR} && exit 0
         ;;
-      *) 
+      *)
         help && echo "ERROR: options - unrecognized target or option $target"
         ;;
     esac
@@ -1207,6 +1207,6 @@ info "Note that if you have a cholmod.h, meagre-crowd will assume you want to us
 TOC=$(date +%s)
 let DELTA=${TOC}-${TIC}
 
-# print time 
+# print time
 info "Finished $(date) (${DELTA}s)"  #TODO $(date --date=${DELTA} +%T))"
 exit
