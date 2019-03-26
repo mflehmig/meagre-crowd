@@ -987,7 +987,7 @@ function build_superlu_dist() {
     -DCMAKE_EXE_LINKER_FLAGS="-lmetis" &> /dev/null || err superlu_dist "configuring failed"
   info "  building .."
   #make &> /dev/null || err superlu_dist "build failed"
-  make V=1 || err superlu_dist "build failed"
+  make V=1 &> /dev/null || err superlu_dist "build failed"
   info "  installing .." # TODO
   cp $superlu_dist_root/SRC/*.h $INSTALL_INC_DIR
   cp $superlu_dist_root/_build/SRC/*.h $INSTALL_INC_DIR
