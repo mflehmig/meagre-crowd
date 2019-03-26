@@ -169,23 +169,26 @@ m4_undefine([MC_EXTRA_CODE])
 m4_undefine([MC_EXTRA_FLAGS])
 ])
 
+# check for mumps
 MC_WITH_LIB([MUMPS],   [dmumps_c],      [dmumps])
+#check for umfpack
 MC_WITH_LIB([UMFPACK], [umfpack_di_symbolic], [umfpack])
 dnl might not be needed, if already included through another solver
 dnl MC_WITH_LIB([CHOLMOD], [cholmod_solve], [cholmod])
+# check for taucs
 # has a 30 day license!
 # TODO TAUCS depends on CILK?
 MC_WITH_LIB([TAUCS],   [taucs_linsolve],[taucs])
 
-# checks for SuperLU_dist
-dnl this isn't most beautiful because MC_WITH_LIB already checks for the command line argument
+# check for SuperLU_dist
+dnl this isn't most beautiful because MC_WITH_LIB already checks for the command line argument and sets HAVE_SUPERLU_DIST
 AC_ARG_WITH ([superlu_dist], [AS_HELP_STRING([--with-readline])],
              [
   CC=mpicxx
   CXX=mpicxx              
-  AC_SEARCH_LIBS([metis_free], [metis], , [AC_MSG_ERROR([missing METIS library])])
-  AC_SEARCH_LIBS([parmetis_v3_nodend], [parmetis], , [AC_MSG_ERROR([missing parMETIS library])])
-  AC_SEARCH_LIBS([mm_strdup], [CombBLAS], , [AC_MSG_ERROR([missing Combinatorial BLAS CombBLAS library])])
+  AC_SEARCH_LIBS([metis_free], [metis], , AC_MSG_ERROR([missing METIS library - needed by superlu_dist]))
+  AC_SEARCH_LIBS([parmetis_v3_nodend], [parmetis], , AC_MSG_ERROR([missing parMETIS library - needed by superlu_dist]))
+  AC_SEARCH_LIBS([mm_strdup], [CombBLAS], , AC_MSG_ERROR([missing Combinatorial BLAS CombBLAS library- needed by superlu_dist]))
   MC_WITH_LIB([SUPERLU_DIST], [superlu_gridinit],[superlu_dist], , [-lCombBLAS -lopenblas -lmetis -lparmetis])
   AC_CHECK_HEADERS([superlu_ddefs.h])
               ], 
@@ -193,6 +196,7 @@ AC_ARG_WITH ([superlu_dist], [AS_HELP_STRING([--with-readline])],
   HAVE_COMBBLAS=no
   HAVE_METIS=no
   HAVE_PARMETIS=no
+  HAVE_SUPERLU_DIST=no
               ])
 
 AC_LANG_PUSH(C++)
