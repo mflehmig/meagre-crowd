@@ -184,6 +184,7 @@ MC_WITH_LIB([CHOLMOD], [cholmod_solve], [cholmod])
 MC_WITH_LIB([TAUCS],   [taucs_linsolve],[taucs])
 
 # check for SuperLU_dist
+# TODO this doesn't make much sense, we have to turn superlu_dist on to use it but all the other solvers are default
 dnl check if we want superlu_dist
 AC_ARG_WITH([superlu_dist], [AS_HELP_STRING([--with-superlu_dist])],
             [want_superlu_dist=yes],
