@@ -84,20 +84,6 @@ ACXX_MPI
  AC_PROG_CPP([$MPICXX])
 # Checks for libraries.
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 # BeBOP: matrix market file format
 AC_SEARCH_LIBS([load_sparse_matrix], [sparse_matrix_converter],,AC_MSG_ERROR([missing BeBOP sparse matrix I/O library]))
 # BeBOP: some OSes don't see bebop_util.so properly even though it's marked as a dependency of sparse_matrix_converter.so
@@ -198,28 +184,27 @@ MC_WITH_LIB([CHOLMOD], [cholmod_solve], [cholmod])
 MC_WITH_LIB([TAUCS],   [taucs_linsolve],[taucs])
 
 # check for SuperLU_dist
-dnl this isn't most beautiful because MC_WITH_LIB already checks for the command line argument and sets HAVE_SUPERLU_DIST
+dnl check if we want superlu_dist
 AC_ARG_WITH([superlu_dist], [AS_HELP_STRING([--with-superlu_dist])],
             [want_superlu_dist=yes],
             [want_superlu_dist=no]
            )
+dnl if yes
 if test "x$want_superlu_dist" = xyes; then
   AC_MSG_NOTICE([Hei, I want superlu_dist!])
-#  CC=mpicxx
-#  CXX=mpicxx
   AC_SEARCH_LIBS([metis_free], [metis], have_metis=yes , AC_MSG_ERROR([missing METIS library - needed by superlu_dist]))
   AC_SEARCH_LIBS([parmetis_v3_nodend], [parmetis], have_parmetis=yes , AC_MSG_ERROR([missing parMETIS library - needed by superlu_dist]))
   AC_SEARCH_LIBS([parmetis_v3_nodend], [parmetis], have_parmetis=yes , AC_MSG_ERROR([missing parMETIS library - needed by superlu_dist]))
   AC_LANG_PUSH(C++)
   AC_SEARCH_LIBS([mm_strdup], [CombBLAS], have_combblas=yes , AC_MSG_ERROR([missing Combinatorial BLAS CombBLAS library- needed by superlu_dist]))
-  #  AC_LANG_PUSH(C++)
-#  CXXFLAGS="$CXXFLAGS -fopenmp"
-  CFLAGS="$CFLAGS -fopenmp"
-  MC_WITH_LIB([SUPERLU_DIST], [superlu_gridinit],[superlu_dist], ,[-lCombBLAS -lopenblas -lmetis -lparmetis])
   AC_LANG_POP()
+  CFLAGS="$CFLAGS -fopenmp"
+  MC_WITH_LIB([SUPERLU_DIST], [superlu_gridinit],[superlu_dist], ,[-lCombBLAS -lopenblas -lmetis -lparmetis -lmpi_cxx])
+dnl  AC_LANG_POP()
   AC_CHECK_HEADERS([superlu_ddefs.h])
   # Okay, if we are here, than every thing is found and we need to link -lmpi_cxx
   LIBS="$LIBS -lmpi_cxx"
+dnl else if no
 else
   AC_MSG_NOTICE([Hei, I don't care about superlu_dist!])
   have_metis="none needed"
