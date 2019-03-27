@@ -28,7 +28,7 @@ AC_CONFIG_MACRO_DIR([m4])
 AC_CONFIG_AUX_DIR([build-aux])
 m4_include([m4/ax_pthread.m4])
 m4_include([m4/acx_mpi.m4])
-m4_include([m4/acxx_mpi.m4])
+#m4_include([m4/acxx_mpi.m4])
 
 AC_CONFIG_SRCDIR([src/meagre-crowd.c])
 AC_CONFIG_HEADERS([src/config.h])
@@ -204,23 +204,31 @@ AC_ARG_WITH([superlu_dist], [AS_HELP_STRING([--with-superlu_dist])],
             [want_superlu_dist=no]
            )
 if test "x$want_superlu_dist" = xyes; then
-  CC=mpicxx
-  CXX=mpicxx              
+  AC_MSG_NOTICE([Hei, I want superlu_dist!])
+#  CC=mpicxx
+#  CXX=mpicxx
   AC_SEARCH_LIBS([metis_free], [metis], have_metis=yes , AC_MSG_ERROR([missing METIS library - needed by superlu_dist]))
   AC_SEARCH_LIBS([parmetis_v3_nodend], [parmetis], have_parmetis=yes , AC_MSG_ERROR([missing parMETIS library - needed by superlu_dist]))
-  AC_SEARCH_LIBS([mm_strdup], [CombBLAS], have_combblas=yes , AC_MSG_ERROR([missing Combinatorial BLAS CombBLAS library- needed by superlu_dist]))
+  AC_SEARCH_LIBS([parmetis_v3_nodend], [parmetis], have_parmetis=yes , AC_MSG_ERROR([missing parMETIS library - needed by superlu_dist]))
   AC_LANG_PUSH(C++)
-  CXXFLAGS="$CXXFLAGS -fopenmp"
+  AC_SEARCH_LIBS([mm_strdup], [CombBLAS], have_combblas=yes , AC_MSG_ERROR([missing Combinatorial BLAS CombBLAS library- needed by superlu_dist]))
+  #  AC_LANG_PUSH(C++)
+#  CXXFLAGS="$CXXFLAGS -fopenmp"
+  CFLAGS="$CFLAGS -fopenmp"
   MC_WITH_LIB([SUPERLU_DIST], [superlu_gridinit],[superlu_dist], ,[-lCombBLAS -lopenblas -lmetis -lparmetis])
   AC_LANG_POP()
   AC_CHECK_HEADERS([superlu_ddefs.h])
+  # Okay, if we are here, than every thing is found and we need to link -lmpi_cxx
+  LIBS="$LIBS -lmpi_cxx"
 else
+  AC_MSG_NOTICE([Hei, I don't care about superlu_dist!])
   have_metis="none needed"
   have_parmetis="none needed"
   have_combblas="none needed"
   have_superlu_dist=no
 fi
 AM_CONDITIONAL(HAVE_SUPERLU_DIST,[test "x$have_superlu_dist" = "xyes"])
+
 
 # check for superlu
 AC_LANG_PUSH(C++)
@@ -288,6 +296,7 @@ dnl AC_MSG_RESULT([              FCFLAGS: $FCFLAGS])
 dnl AC_MSG_RESULT([            FCLDFLAGS: $FCLDFLAGS])
 dnl AC_MSG_RESULT([     Shared Libraries: $enable_shared])
 dnl AC_MSG_RESULT([     Static Libraries: $enable_static])
+AC_MSG_RESULT([           Libs: $LIBS])
 AC_MSG_RESULT([])
 AC_MSG_RESULT([Features --------------------------------------------])
 dnl AC_MSG_RESULT([    Fortran Interface: $enable_fortran])
