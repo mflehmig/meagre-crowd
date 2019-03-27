@@ -31,7 +31,7 @@ CFLAGS="-I$PWD/$(gcc -dumpmachine)/include"
 
 Run the following commands to compile this program
   
-  LDFLAGS="" CFLAGS="" CPPFLAGS="" ./configure (--prefix=<custom-install-location> --enable-debug=yes --with-all-solvers)
+  LDFLAGS="" CFLAGS="" CPPFLAGS="" ./configure (--prefix=<custom-install-location> --enable-debug=yes --with-[solver] --without-[solver] [2])
   make
   make install
 
@@ -45,6 +45,8 @@ and would like to install it in your home directory) use the --prefix during con
       See the Autoconf documentation.
       /usr/bin/autoconf failed with exit status: 1
 I have neither found the cause nor the solution for it. Invoking "bash autogen" several times hopefully also solves the problem for you.
+
+[2] Meagre-crowd will assume you want to use every solver, so you need to turn solvers off rather than on. You have to turn on superlu_dist though.
 
 Running the Tests
 -----------------
