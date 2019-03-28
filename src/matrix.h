@@ -99,42 +99,71 @@ typedef struct matrix_t {
 } matrix_t;
 // Note: initializing via 'matrix_t A = {0};' should get the most common defaults and a valid but empty matrix
 
-// helper functionis to deallocate the components of a matrix_t or the whole thing, assuming it was malloc-ed
+// helper functions to deallocate the components of a matrix_t or the whole thing, assuming it was malloc-ed
+/*! \details Allocates matrix.
+ * \return Pointer to the allocated space as matrix_t*.
+ */
 matrix_t* malloc_matrix();
+
+/*! \details Frees allocated space of matrix m.
+ */
 void free_matrix( matrix_t* m );
+
+/*! \details I don't know what this does.
+ */
 void clear_matrix( matrix_t* m );
+
 // TODO const correctness
 matrix_t* copy_matrix( matrix_t* m ); // deep copy
-// compare matrices
-// returns: zero on match
+
+/*! \details Compare matrices.
+ * \return Zero on match.
+ */
 // TODO const correctness
 int cmp_matrix( matrix_t* a, matrix_t* b );
-// convert matrix to a new format
-// returns: non-zero on failure
+
+/*! \details Converts matrix to a new format.
+ * \return Returns non-zero on failure.
+ */
 int convert_matrix( matrix_t* m, enum matrix_format_t f, enum matrix_base_t b );
-int convert_matrix_symmetry( matrix_t* m, enum matrix_symmetric_storage_t loc );
+
+/*! \details This function.
+ * \return Returns
+ */
+int convert_matrix_symmetry( 
+    matrix_t* m /*! The matrix to convert.*/, 
+    enum matrix_symmetric_storage_t loc /*! The matrix storage type of m. */
+    );
+
+/*! \details
+ * \return
+ */
 int detect_matrix_symmetry( matrix_t* m );
 
-
-// check the matrix isn't malformed
-// returns: 0: okay, <0=problem found
+/*! \details Checks if the matrix isn't malformed
+ * \return 0: ok, <0: problem found
+ */
 // TODO const correctness
 int validate_matrix( matrix_t* m );
 
-// for debugging, this will print the matrix to stdout
-// pre is a string to put at the start of each line
-// (indenting and/or matrix name)
-void printf_matrix( char const *const pre, matrix_t* m );
+/*! \details For debugging, will print the matrix to stdout.
+ * \return
+ */
+void printf_matrix( 
+    char const *const pre /*! String at the start of each line, like indent and/or matrix name. */, 
+    matrix_t* m /*! The matrix. */
+    );
 
 // from enum, returns width of ea. value in the matrix in bytes
 size_t _data_width( const enum matrix_data_type_t t );
 
 
-// test result of matrix computations
-// returns: 1=match w/in precision, 0=non-matching
+//int results_match( matrix_t* expected_matrix, matrix_t* result_matrix, const double precision );
+/*! \details Test result of matrix computations.
+ * \return 1: match w/in precision, 0: not matching
+ */
 // TODO refactor mv to matrix.h, operate on matrix_t objects
 // TODO cmp_matrix()
-//int results_match( matrix_t* expected_matrix, matrix_t* result_matrix, const double precision );
 int results_match(matrix_t* expected_matrix, matrix_t* result_matrix, const double precision);
 
 #endif
