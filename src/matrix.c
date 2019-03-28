@@ -1138,7 +1138,7 @@ static inline int _symmetry_both( matrix_t* m ) {
   // reverse ii and jj in the copied portions, appended to the old data
   memcpy(m->ii + nz_old, m->jj, nz_old * sizeof(unsigned int));
   memcpy(m->jj + nz_old, m->ii, nz_old * sizeof(unsigned int));
-  memcpy((float *)m->dd + nz_old * dwidth, m->dd, nz_old * dwidth);
+  memcpy(m->dd + nz_old * dwidth, m->dd, nz_old * dwidth);
 
   // update ptrs
   m->location = MC_STORE_BOTH;
@@ -1164,7 +1164,7 @@ static inline int _symmetry_both( matrix_t* m ) {
   return 0;
 }
 
-static inline int _realloc_arrays(matrix_t* m, size_t nz) 
+static inline int _realloc_arrays(matrix_t* m, size_t nz)
   // realloc fails FIXME
 {
   if (nz == m->nz){ // no reallocation needed
@@ -1353,7 +1353,6 @@ int detect_matrix_symmetry(matrix_t* m)
 
   const enum matrix_format_t old_format = m->format;
   int ret;
-
   // convert to COO format
   // TODO handle other formats directly (changing formats is expensive)
   if ((ret = convert_matrix(m, SM_COO, m->base)) != 0)
