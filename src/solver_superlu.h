@@ -16,6 +16,9 @@
  *     You should have received a copy of the GNU General Public License
  *     along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
+
+//TODO this is just a copy of the file for superlu_dist. Don't use this. 
+
 #ifndef _SOLVER_SUPERLU_H_
 #define _SOLVER_SUPERLU_H_
 

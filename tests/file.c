@@ -43,7 +43,7 @@ char *argv[];
   struct sparse_matrix_t* A;
 
   printf( "harwell-boeing\n" );
-  A = load_sparse_matrix( HARWELL_BOEING, "test.hb" );
+  A = load_sparse_matrix( HARWELL_BOEING, "./test.hb" );
   assert( A != NULL );
   //save_sparse_matrix ("out-test.hb2mm", A, MATRIX_MARKET); // TODO broken output (all zeros)
   //save_sparse_matrix ("out-test.hb2hb", A, HARWELL_BOEING); TODO broken output (all zeros)

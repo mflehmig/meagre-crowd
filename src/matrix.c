@@ -1268,13 +1268,15 @@ static inline void _symmetry_lower(matrix_t* m)
       nz++;
     }
   }
-  int ret_ = _realloc_arrays(m, nz); //this fails, the problem is in _realloc_arrays
+  _realloc_arrays(m, nz); //this fails, the problem is in _realloc_arrays
+  //int ret_ = _realloc_arrays(m, nz); //this fails, the problem is in _realloc_arrays
   //printf("Return code of _realloc_arrays was %d", ret_);
   m->location = LOWER_TRIANGULAR;
 }
 
 int convert_matrix_symmetry(matrix_t* m, enum matrix_symmetric_storage_t loc)
 {
+  printf("Hey I'm in convert_matrix_symmetry");
   assert(m->sym == SM_SYMMETRIC); //check if matrix has symmetric type
 
   // short circuit if no work to do
@@ -1292,8 +1294,10 @@ int convert_matrix_symmetry(matrix_t* m, enum matrix_symmetric_storage_t loc)
   int ret1 = 0;
   switch (m->location) {
     case MC_STORE_BOTH:
+      printf("I'm MC_STORE_BOTH");
       switch (loc) {
         case MC_STORE_BOTH:  // nothing to do, match
+        printf("Yet I should be MC_STORE_BOTH");
           break;
         case UPPER_TRIANGULAR:
           _symmetry_lower(m);
@@ -1305,8 +1309,10 @@ int convert_matrix_symmetry(matrix_t* m, enum matrix_symmetric_storage_t loc)
       }
       break;
     case UPPER_TRIANGULAR:
+      printf("I'm UPPER_TRIANGULAR");
       switch (loc) {
         case MC_STORE_BOTH:
+        printf("Yet I should be MC_STORE_BOTH");
           ret1 = _symmetry_both(m);
           break;
         case UPPER_TRIANGULAR:
@@ -1317,15 +1323,17 @@ int convert_matrix_symmetry(matrix_t* m, enum matrix_symmetric_storage_t loc)
       }
       break;
     case LOWER_TRIANGULAR:
+      printf("I'm LOWER_TRIANGULAR");
       switch (loc) {
         case MC_STORE_BOTH:
+        printf("Yet I should be MC_STORE_BOTH");
           ret1 = _symmetry_both(m);
           break;
         case UPPER_TRIANGULAR:
           _symmetry_swap(m);
           break;
         case LOWER_TRIANGULAR:
-          break;  // nothing to do
+          break;  // nothing to do, match
       }
       break;
   }

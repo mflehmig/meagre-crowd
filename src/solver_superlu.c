@@ -17,6 +17,8 @@
  *     along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
+//TODO this is just a copy of the file for superlu_dist. Don't use this. 
+
 #include "solver_superlu.h"
 #include "solvers.h"
 #include "matrix.h"

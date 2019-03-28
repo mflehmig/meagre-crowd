@@ -900,6 +900,7 @@ EOF
 
 # = build_superlu =
 function build_superlu() {
+  info "WARNING! Even though SuperLU can be installed with this script, it is not fully implemented in meagre-crowd. Every file in src/ or tests/ for this solver is just a copy of the correct file for SuperLU_DIST."
   # get superlu
   info "SuperLU"
   get_and_unpack superlu https://crd-legacy.lbl.gov/~xiaoye/SuperLU/superlu_${SUPERLU_VER}.tar.gz

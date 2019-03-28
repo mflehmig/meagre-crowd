@@ -30,12 +30,13 @@ struct enum2format_t {
 
 // how many matrix_format_t entries are there
 #define matrix_format_t__MAX 6
-static const struct enum2format_t enum2format[] = { {INVALID, "invalid"},
+static const struct enum2format_t enum2format[] = { 
+  {INVALID, "invalid"},
   {DROW,    "dense (rows)"},
   {DCOL,    "dense (columns)"},
-  {SM_COO,  "COO"},
-  {SM_CSC,  "CSC"},
-  {SM_CSR,  "CSR"}
+  {SM_COO,  "sparse (COO)"},
+  {SM_CSC,  "sparse (CSC)"},
+  {SM_CSR,  "sparse (CSR)"}
 };
 
 struct enum2base_t {
@@ -43,7 +44,8 @@ struct enum2base_t {
   const char* s;
 };
 
-const struct enum2base_t enum2base[] = { {FIRST_INDEX_ZERO, "zero"},
+const struct enum2base_t enum2base[] = { 
+  {FIRST_INDEX_ZERO, "zero"},
   {FIRST_INDEX_ONE, "one"}
 };
 
@@ -93,7 +95,9 @@ void test_symmetry( matrix_t* a ) {
 
   // de-symmetrize the matrix and check it gets detected correctly
   assert( a->sym == SM_SYMMETRIC );
-  assert( convert_matrix_symmetry( a, MC_STORE_BOTH ) == 0 );
+  printf("See I asserted this!1\n");
+  assert( convert_matrix_symmetry( a, MC_STORE_BOTH ) == 0 ); // the problem is this! we need the assertion
+  printf("See I asserted this!2\n");
   a->sym = SM_UNSYMMETRIC;
   print_matrix( a );
   assert( detect_matrix_symmetry( a ) == 0 );
@@ -238,6 +242,7 @@ void test_basic() {
 
 
   build_test_matrix( &c, 1 );
+  printf("I built a matrix of type 1!");
   test_symmetry( c );
 
   build_test_matrix( &c, 0 );
@@ -250,7 +255,8 @@ void test_basic() {
   free_matrix( c );
 }
 
-void build_test_matrix( matrix_t** m, int i ) {
+void build_test_matrix( matrix_t** m, int type ) {
+  assert( ( type < 2 ) && ( type >= 0 ) );
   assert( m != NULL );
   free_matrix( *m );
   *m = malloc_matrix();
@@ -260,7 +266,7 @@ void build_test_matrix( matrix_t** m, int i ) {
     0
   };
 
-  switch ( i ) {
+  switch ( type ) {
     case 0:
       // unsymmetric matrix
       c->m = 8;
@@ -312,9 +318,9 @@ void build_test_matrix( matrix_t** m, int i ) {
       break;
 
     default:
-      assert( 0 ); // bad i
+      assert( 0 ); // bad type
   }
-  printf( "  generated test matrix %d\n", i );
+  printf( "  generated test matrix of type %d\n", type );
   assert( validate_matrix( c ) == 0 );
 }
 
