@@ -1160,16 +1160,18 @@ static inline int _symmetry_both( matrix_t* m ) {
     }
   }
   _realloc_arrays(m, m->nz - del);
-  // ignore return value .. we're shrinking the arrays and if the realloc fails we can continue on
+  // ignore return value .. we're shrinking the arrays and if the realloc fails we can continue on - well, somehow we can't FIXME
   return 0;
 }
 
-static inline int _realloc_arrays(matrix_t* m, size_t nz)
+static inline int _realloc_arrays(matrix_t* m, size_t nz) 
+  // realloc fails FIXME
 {
-  if (nz == m->nz)
+  if (nz == m->nz){ // no reallocation needed
     return 0;
+  }
 
-  // TODO could probably clean this code up: realloc free's the ptrs and returns NULL if nz = 0... but need to detect the malloc failure cases too!
+  // TODO could probably clean this code up: realloc frees the ptrs and returns NULL if nz = 0... but need to detect the malloc failure cases too!
   if (nz == 0) {
     free(m->ii);
     free(m->jj);
@@ -1183,8 +1185,11 @@ static inline int _realloc_arrays(matrix_t* m, size_t nz)
   const size_t dwidth = _data_width(m->data_type);
   // resize arrays
   unsigned int* ii_new = (unsigned int *)realloc(m->ii, nz * sizeof(unsigned int));
+  //printf("ii_new=%d\n", *ii_new);
   unsigned int* jj_new = (unsigned int *)realloc(m->jj, nz * sizeof(unsigned int));
+  //printf("jj_new=%d\n", *jj_new);
   void* dd_new = realloc(m->dd, nz * dwidth);
+  //printf("dd_new=%p\n", dd_new);
 
   // udpate ptrs
   if (ii_new != NULL) {
@@ -1200,10 +1205,12 @@ static inline int _realloc_arrays(matrix_t* m, size_t nz)
   if ((ii_new == NULL) || (jj_new == NULL) || (dd_new == NULL)) {
     m->nz = 0;  // something has gone horribly wrong, don't look at these arrays!
     assert(0);
+    //printf("_realloc_arrays: return code is -1\n");
     return -1;
   }
   else {
     m->nz = nz;
+    //printf("_realloc_arrays: return code is 0\n");
     return 0;
   }
 }
@@ -1237,9 +1244,11 @@ static inline void _coo_merge_duplicate_entries(matrix_t* m)
   _realloc_arrays(m, m->nz - del);
 }
 
-// convert from symmetry MC_STORE_BOTH -> LOWER_TRIANGULAR
-// note that realloc might fail but we can carry on: no failure cases
-static inline void _symmetry_lower(matrix_t* m);
+/*! \details Convert from symmetry MC_STORE_BOTH -> LOWER_TRIANGULAR. Note that realloc might fail but we can carry on: no failure cases.
+ */
+static inline void _symmetry_lower(
+    matrix_t* m /*! Pointer to the matrix to convert.*/
+    );
 static inline void _symmetry_lower(matrix_t* m)
 {
   assert(m->format == SM_COO);
@@ -1259,31 +1268,32 @@ static inline void _symmetry_lower(matrix_t* m)
       nz++;
     }
   }
-  _realloc_arrays(m, nz);
+  int ret_ = _realloc_arrays(m, nz); //this fails, the problem is in _realloc_arrays
+  //printf("Return code of _realloc_arrays was %d", ret_);
   m->location = LOWER_TRIANGULAR;
 }
 
 int convert_matrix_symmetry(matrix_t* m, enum matrix_symmetric_storage_t loc)
 {
-  assert(m->sym == SM_SYMMETRIC);
+  assert(m->sym == SM_SYMMETRIC); //check if matrix has symmetric type
 
   // short circuit if no work to do
   //if(m->location == loc)
   //  return 0;
 
   int ret;
-  const enum matrix_format_t old_format = m->format;
+  const enum matrix_format_t old_format = m->format; //current format of m
 
   // convert to COO format
   // TODO handle other formats directly (changing formats is expensive)?
-  if ((ret = convert_matrix(m, SM_COO, m->base)) != 0)
+  if ((ret = convert_matrix(m, SM_COO, m->base)) != 0) //if converting fails
     return ret;
 
   int ret1 = 0;
   switch (m->location) {
     case MC_STORE_BOTH:
       switch (loc) {
-        case MC_STORE_BOTH:  // nothing to do
+        case MC_STORE_BOTH:  // nothing to do, match
           break;
         case UPPER_TRIANGULAR:
           _symmetry_lower(m);
@@ -1300,7 +1310,7 @@ int convert_matrix_symmetry(matrix_t* m, enum matrix_symmetric_storage_t loc)
           ret1 = _symmetry_both(m);
           break;
         case UPPER_TRIANGULAR:
-          break;  // nothing to do
+          break;  // nothing to do, match
         case LOWER_TRIANGULAR:
           _symmetry_swap(m);
           break;
