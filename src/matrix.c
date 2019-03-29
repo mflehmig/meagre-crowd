@@ -1153,7 +1153,7 @@ static inline int _symmetry_both( matrix_t* m ) {
         // Note: have to use memmove here since potentially the arrays dst and src overlap when we shuffle them downwards
         memmove(m->ii + i, m->ii + (i + 1), (m->nz - i - 1 - del) * sizeof(unsigned int));
         memmove(m->jj + i, m->jj + (i + 1), (m->nz - i - 1 - del) * sizeof(unsigned int));
-        memmove((float *)m->dd + i * dwidth, (float *)m->dd + (i + 1) * dwidth, (m->nz - i - 1 - del) * dwidth);
+        memmove(m->dd + i * dwidth, m->dd + (i + 1) * dwidth, (m->nz - i - 1 - del) * dwidth);
         i--;
       }
       del++;  // deleting the i-th entry
