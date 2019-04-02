@@ -173,11 +173,11 @@ int main(int argc, char ** argv)
       b->dd = malloc(m * sizeof(double));
       b->data_type = REAL_DOUBLE;
       {  // initialize right-hand-side (b)
-        void* d;
+        double* d;
         d = b->dd;
         for (unsigned int i = 0; i < m; i++) {
-          *d = i;
-          d++;
+            *(int *)d = i;
+	          d = (int *)d + 1;
         }
       }
     }
