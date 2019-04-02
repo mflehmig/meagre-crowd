@@ -608,7 +608,7 @@ void solver_evaluate(solver_state_t* s, matrix_t* b, matrix_t* x)
           x->dd = realloc(x->dd, (x->m * (x->n + xx.n)) * sizeof(double));
           assert(x->dd != NULL);  // realloc failure
           // and copy the data into the newly resized buffer
-          memcpy((float *)x->dd + (x->m * x->n) * sizeof(double), xx.dd, x->m * xx.n * sizeof(double));
+          memcpy(x->dd + (x->m * x->n) * sizeof(double), xx.dd, x->m * xx.n * sizeof(double));
           x->n += xx.n;  // increment the column count
         }
         clear_matrix(&xx);  // free any memory we accumulated from the solver
