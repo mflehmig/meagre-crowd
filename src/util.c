@@ -11,8 +11,8 @@
 void mpi_sum(void* in, void* inout, int *len, MPI_Datatype *dptr)
 {
   assert(*dptr == MPI_DOUBLE);
-  double* const din = (double *)in;
-  double* const dinout = (double *)inout;
+  double* const din = in;
+  double* const dinout = inout;
   for (int i = 0; i < *len; i++) {
     dinout[i] += din[i];
   }

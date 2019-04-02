@@ -295,11 +295,11 @@ int readmm_data_dense(FILE* f, matrix_t* A, int datatype, int symmetry, int rows
     }
 
     // read in the data
-    double* d = (double *)A->dd;
+    double* d = A->dd;
     const int CHARS = 1025;
     char line[CHARS];
     char* lp;
-    //lp = "1";
+    lp = "1";
     while (lp != NULL) {
         lp = fgets(line, CHARS, f);
     }
@@ -349,8 +349,8 @@ int readmm_data_sparse(FILE* f, matrix_t* A, int datatype, int symmetry, int row
     }
 
     // allocate memory
-    A->ii = (unsigned int *)malloc(nz * sizeof(unsigned int));
-    A->jj = (unsigned int *)malloc(nz * sizeof(unsigned int));
+    A->ii = malloc(nz * sizeof(unsigned int));
+    A->jj = malloc(nz * sizeof(unsigned int));
     switch (datatype) {  // real, int, complex, pattern
         case 0:
             A->dd = malloc(nz * sizeof(double));
@@ -374,7 +374,7 @@ int readmm_data_sparse(FILE* f, matrix_t* A, int datatype, int symmetry, int row
     // TODO assert that its safe to cast these based on rows/cols/nz
     int* ii = (int*) A->ii;
     int* jj = (int*) A->jj;
-    double* d = (double *)A->dd;
+    double* d = A->dd;
     const int CHARS = 1025;  //can only read 1024 chars per line
     char line[CHARS];
     char* lp = NULL;
@@ -837,7 +837,8 @@ int write_mat(char const * const filename, matrix_t * const A)
                 ret = 3;  // failed to malloc data for storage
             }
             else {
-                ret = Mat_VarWrite(matfp, t, MAT_COMPRESSION_ZLIB);  // compress TODO input variable missing
+                //ret = Mat_VarWrite(matfp, t, MAT_COMPRESSION_ZLIB);  // compress TODO input variable missing
+                ret = Mat_VarWrite(matfp, t, 1);  // compress
                 if (ret != 0)
                     ret = 4;  // failed data write
             }
@@ -924,7 +925,7 @@ int read_mat(char const * const filename, matrix_t * const A)
       // Note that Matlab will save('-v4'...) a sparse matrix
       // to version 4 format without complaint but it appears
       // to be gibberish as far as MatIO is concerned
-      struct csc_matrix_t* st = (struct csc_matrix_t *)t->data;
+      struct csc_matrix_t* st = t->data;
       A->nz = st->nnz; //st->nzmax has the actual size of the allocated st->data
       A->format = SM_CSC;
       // transfer the data pointer into our strucut
@@ -961,7 +962,7 @@ int read_mat(char const * const filename, matrix_t * const A)
             // Note that Matlab will save('-v4'...) a sparse matrix
             // to version 4 format without complaint but it appears
             // to be gibberish as far as MatIO is concerned
-            mat_sparse_t* st = (mat_sparse_t *)t->data;
+            mat_sparse_t* st = t->data;
             A->nz = st->ndata;  //st->nzmax has the actual size of the allocated st->data
             A->format = SM_CSC;
             // transfer the data pointer into our strucut

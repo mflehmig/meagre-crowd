@@ -74,9 +74,9 @@ int matrix_bcast(matrix_t* A, int root, MPI_Comm comm) {
   if(myrank != root) {
     // TODO refactor: this could be a generic matrix_realloc(A, m_new, n_new, nz_new)
     // assuming CSC format
-    A->ii = (unsigned int *)malloc(A->nz * sizeof(unsigned int)); // row indices
+    A->ii = malloc(A->nz * sizeof(unsigned int)); // row indices
     assert(A->ii != NULL); // TODO malloc error
-    A->jj = (unsigned int *)malloc(((A->n)+1) * sizeof(unsigned int)); // col ptrs
+    A->jj = malloc(((A->n)+1) * sizeof(unsigned int)); // col ptrs
     assert(A->jj != NULL); // TODO malloc error
     A->dd = malloc(A->nz * sizeof(double)); // data
     assert(A->dd != NULL); // TODO malloc error

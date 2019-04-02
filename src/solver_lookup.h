@@ -125,8 +125,7 @@ struct  solver_properties_t {
 
 static const struct solver_properties_t solver_lookup[] = {
 #ifdef HAVE_UMFPACK
-  { (char *)"umfpack", (char *)"UMFPACK", (char *)"Tim Davis et al", (char *)"University of Florida", (char *)"5.5.0", (char *)"GPL",
-    (char *)"http://www.cise.ufl.edu/research/sparse/umfpack",
+  { "umfpack", "UMFPACK", "Tim Davis et al", "University of Florida", "5.5.0", "GPL", "http://www.cise.ufl.edu/research/sparse/umfpack",
     // TODO 5.5.1 is available
     &solver_init_umfpack,
     &solver_analyze_umfpack,
@@ -154,8 +153,8 @@ static const struct solver_properties_t solver_lookup[] = {
 #endif
 
 #ifdef HAVE_MUMPS
-  { (char *)"mumps", (char *)"MUMPS", (char *)"Patrick Amestoy et al", (char *)"Université de Toulouse, et. al", (char *)"4.9.2", (char *)"public domain",
-    (char *)"http://graal.ens-lyon.fr/MUMPS",
+  { "mumps", "MUMPS", "Patrick Amestoy et al", "Université de Toulouse, et. al", "4.9.2", "public domain",
+    "http://graal.ens-lyon.fr/MUMPS",
     &solver_init_mumps,
     &solver_analyze_mumps,
     &solver_factorize_mumps,
@@ -177,9 +176,9 @@ static const struct solver_properties_t solver_lookup[] = {
 #endif
 
 #ifdef HAVE_CHOLMOD
-  { (char *)"cholmod", (char *)"CHOLMOD", (char *)"Tim Davis, William Hager", (char *)"University of Florida", (char *)"1.7.1", (char *)"LGPL",
+  { "cholmod", "CHOLMOD", "Tim Davis, William Hager", "University of Florida", "1.7.1", "LGPL",
     // version 1.7.3 is available...
-    (char *)"http://www.cise.ufl.edu/research/sparse/cholmod",
+    "http://www.cise.ufl.edu/research/sparse/cholmod",
     &solver_init_cholmod,
     &solver_analyze_cholmod,
     &solver_factorize_cholmod,
@@ -220,8 +219,8 @@ static const struct solver_properties_t solver_lookup[] = {
   // effectively single threaded
   // mostly symmetric solvers: out-of-core and in-core, multithreaded w/ CILK (SMP -- taucs.cilk.nproc=N) + 1 out-of-core unsym solver (slow?)...
   // entry added 2011-03-01, software last updated Sept, 2003 (v2.2)
-  { (char *)"taucs", (char *)"TAUCS", (char *)"Sivan Toledo", (char *)"Tel-Aviv University", (char *)"2.2", (char *)"LGPL",
-    (char *)"http://www.tau.ac.il/~stoledo/taucs/",
+  { "taucs", "TAUCS", "Sivan Toledo", "Tel-Aviv University", "2.2", "LGPL",
+    "http://www.tau.ac.il/~stoledo/taucs/",
     &solver_init_taucs,
     &solver_analyze_taucs,
     &solver_factorize_taucs,
@@ -232,7 +231,7 @@ static const struct solver_properties_t solver_lookup[] = {
     SOLVES_DATA_TYPE_REAL_DOUBLE | // TODO and REAL_COMPLEX, double and single precision, and handles hermitian
     SOLVES_RHS_DCOL | SOLVES_RHS_VECTOR_ONLY,
     0, // uses CILK? not MPI or openMP
-    (char *)"        TODO citations\n" }, // TODO
+    "        TODO citations\n" }, // TODO
 #endif
 
 #ifdef HAVE_PARDISO
@@ -265,8 +264,8 @@ static const struct solver_properties_t solver_lookup[] = {
   //   unsym: combine direct and iterative for unsym (same sparsity pattern, slowly changing system)
   //     solves first factorization to LU, then uses these as preconditioned krylov subspace iterations, switch back if not converging
   //     IPARM(4), IPARM(20)
-  { (char *)"pardiso", (char *)"Pardiso", (char *)"Olaf Schenk, Klaus Gärtner", (char *)"University Basel", (char *)"4.1.0", (char *)"academic/commercial",
-    (char *)"http://www.pardiso-project.org",
+  { "pardiso", "Pardiso", "Olaf Schenk, Klaus Gärtner", "University Basel", "4.1.0", "academic/commercial",
+    "http://www.pardiso-project.org",
     &solver_init_pardiso,
     &solver_analyze_pardiso,
     &solver_factorize_pardiso,
@@ -278,7 +277,7 @@ static const struct solver_properties_t solver_lookup[] = {
     SOLVES_DATA_TYPE_REAL_DOUBLE | // TODO and REAL_COMPLEX
     SOLVES_RHS_DCOL,
     SOLVER_SINGLE_THREADED_ONLY, // TODO FIXME (currently broken, waiting reply to support emails 2011-03-11) SOLVER_REQUIRES_OMP | SOLVER_CAN_USE_MPI,
-    (char *)"    [1] O. Schenk and K. Gärtner, Solving Unsymmetric Sparse Systems of Linear\n"
+    "    [1] O. Schenk and K. Gärtner, Solving Unsymmetric Sparse Systems of Linear\n"
     "        Equations with PARDISO, Journal of Future Generation Computer Systems,\n"
     "        20(3):475--487, 2004.\n"
     "    [2] O. Schenk and K. Gärtner, On fast factorization pivoting methods for\n"
@@ -298,8 +297,8 @@ static const struct solver_properties_t solver_lookup[] = {
 #endif
 
 #ifdef HAVE_WSMP
-  { (char *)"wsmp", (char *)"WSMP", (char *)"Anshul Gupta", (char *)"IBM/Univ. Minnesota", (char *)"11.01.19", (char *)"commercial?",
-    (char *)"http://www-users.cs.umn.edu/~agupta/wsmp.html",
+  { "wsmp", "WSMP", "Anshul Gupta", "IBM/Univ. Minnesota", "11.01.19", "commercial?",
+    "http://www-users.cs.umn.edu/~agupta/wsmp.html",
     &solver_init_wsmp,
     &solver_analyze_wsmp,
     &solver_factorize_wsmp,
@@ -317,8 +316,8 @@ static const struct solver_properties_t solver_lookup[] = {
 #endif
 
 #ifdef HAVE_SUPERLU_DIST
-  { (char *)"superlu", (char *)"SuperLU_DIST", (char *)"X. Sherry Li et al", (char *)"Lawrence Berkeley National Lab/Univ. of California, Berkley", (char *)"2.5", (char *)"BSD-new",
-    (char *)"http://crd.lbl.gov/~xiaoye/SuperLU/",
+  { "superlu", "SuperLU_DIST", "X. Sherry Li et al", "Lawrence Berkeley National Lab/Univ. of California, Berkley", "2.5", "BSD-new",
+    "http://crd.lbl.gov/~xiaoye/SuperLU/",
     &solver_init_superlu_dist,
     &solver_analyze_superlu_dist,
     &solver_factorize_superlu_dist,
@@ -329,7 +328,7 @@ static const struct solver_properties_t solver_lookup[] = {
     SOLVES_DATA_TYPE_REAL_DOUBLE | // TODO and COMPLEX (single and double precision)
     SOLVES_RHS_DCOL,
     SOLVER_REQUIRES_MPI, // TODO: SOLVER_CAN_USE_MPI (select non-MPI solver...) // TODO non-MPI/OMP solvers (switch, based on number of threads/nodes)
-    (char *)"    [1] Xiaoye S. Li, James W. Demmel, SuperLU_DIST: A Scalable Distributed-Memory\n"
+    "    [1] Xiaoye S. Li, James W. Demmel, SuperLU_DIST: A Scalable Distributed-Memory\n"
     "        Sparse Direct Solver for Unsymmetric Linear Systems, ACM Trans.\n"
     "        Mathematical Software, vol 29, no 2, pp110--140, June 2003\n"
     "    [2] L. Grigori, James W. Demmel, Xiaoye S. Li, Parallel Symbolic Factorization\n"

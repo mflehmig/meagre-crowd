@@ -45,7 +45,7 @@ typedef struct {
 
 void solver_init_superlu_dist( solver_state_t* s ) {
   assert( s != NULL );
-  solve_system_superlu_dist_t * const p = (solve_system_superlu_dist_t *)calloc( 1, sizeof( solve_system_superlu_dist_t ) );
+  solve_system_superlu_dist_t * const p = calloc( 1, sizeof( solve_system_superlu_dist_t ) );
   assert( p != NULL );
   s->specific = p;
 
@@ -85,7 +85,7 @@ void solver_init_superlu_dist( solver_state_t* s ) {
 // TODO split analyze stage into ordering and symbolic factorization stages?
 void solver_analyze_superlu_dist( solver_state_t* s, matrix_t* A ) {
   assert( s != NULL );
-  solve_system_superlu_dist_t* const p = (solve_system_superlu_dist_t *)s->specific;
+  solve_system_superlu_dist_t* const p = s->specific;
   assert( p != NULL );
   if( !p->active ) // check if this grid node is active
     return;
@@ -100,7 +100,7 @@ void solver_analyze_superlu_dist( solver_state_t* s, matrix_t* A ) {
   }
   matrix_bcast(AA, p->rank0, p->grid.comm);
   dCreate_CompCol_Matrix_dist(&(p->A), AA->m, AA->n, AA->nz,
-                              (double *)AA->dd, (int*) AA->ii, (int*) AA->jj, SLU_NC, SLU_D, SLU_GE);
+                              AA->dd, (int*) AA->ii, (int*) AA->jj, SLU_NC, SLU_D, SLU_GE);
   // last 3 enums are: stype=column-wise(no super-nodes), dtype=double, mtype=general);
 
   // clear the data pointers since these are now held by p->A and
@@ -120,7 +120,7 @@ void solver_factorize_superlu_dist( solver_state_t* s, matrix_t* A ) {
 
 void solver_evaluate_superlu_dist( solver_state_t* s, matrix_t* b, matrix_t* x ) {
   assert( s != NULL );
-  solve_system_superlu_dist_t* const p = (solve_system_superlu_dist_t *)s->specific;
+  solve_system_superlu_dist_t* const p = s->specific;
   assert( p != NULL );
   if( !p->active ) // check if this grid node is active
     return;
@@ -210,7 +210,7 @@ void solver_finalize_superlu_dist( solver_state_t* s ) {
   if ( s == NULL )
     return;
 
-  solve_system_superlu_dist_t* const p = (solve_system_superlu_dist_t *)s->specific;
+  solve_system_superlu_dist_t* const p = s->specific;
 
   // release memory
   if ( p != NULL ) {
