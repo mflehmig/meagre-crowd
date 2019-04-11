@@ -349,8 +349,8 @@ int perftimer_snprintf_csv_body(perftimer_t const * const h, char* s, const size
 
   unsigned int m_max = _max_links(h);  // longest number of links
   // create list of times
-  double* t = (double *)calloc(m_max, sizeof(double));
-  unsigned int * r = (unsigned int *)calloc(m_max, sizeof(unsigned int));  // how many went into this count
+  double* t = calloc(m_max, sizeof(double));
+  unsigned int * r = calloc(m_max, sizeof(unsigned int));  // how many went into this count
   perftimer_t const * hs = h;
   perftimer_tic_t const * ptr = h->head;
   while (hs != NULL) {
