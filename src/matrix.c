@@ -115,7 +115,8 @@ static int _qsort_coo_cmp_cols_rows(const void* a, const void* b)
   }
 }
 
-/*inline*/ matrix_t* malloc_matrix()
+// inline matrix_t* malloc_matrix() // BOYLE
+matrix_t* malloc_matrix()
 {
   matrix_t* m = malloc(sizeof(matrix_t));
   // make this safe to free_matrix() whatever comes out of this
@@ -138,7 +139,8 @@ inline void free_matrix(matrix_t* m)
   }
 }
 
-/*inline*/ void clear_matrix(matrix_t* m)
+// inline void clear_matrix(matrix_t* m) // BOYLE
+void clear_matrix(matrix_t* m)
 {
   assert(m != NULL);
   free(m->dd);
@@ -173,7 +175,7 @@ matrix_t* copy_matrix(matrix_t* m)
 {
   assert(m != NULL);
 
-  matrix_t* ret = (matrix_t *)malloc(sizeof(matrix_t));
+  matrix_t* ret = malloc(sizeof(matrix_t));
   if (ret == NULL)  // malloc failed
     return NULL;
 
@@ -264,7 +266,7 @@ matrix_t* copy_matrix(matrix_t* m)
       }
       memcpy(ret->jj, m->jj, (m->n + 1) * sizeof(unsigned int));  // memcpy(*dest,*src,n)
 
-      ret->ii = (unsigned int *)malloc((m->nz) * sizeof(unsigned int));
+      ret->ii = malloc((m->nz) * sizeof(unsigned int));
       if (ret->ii == NULL) {  // malloc failed
         free(ret->jj);
         free(ret->dd);
@@ -475,7 +477,7 @@ struct sparse_matrix_t* _bebop_input(matrix_t* m, enum sparse_matrix_storage_for
     case CSC:
     {
       A->format = CSC;
-      struct csc_matrix_t* p = (struct csc_matrix_t *)calloc(1, sizeof(struct csc_matrix_t));
+      struct csc_matrix_t* p = calloc(1, sizeof(struct csc_matrix_t));
       A->repr = p;
       p->m = m->m;
       p->n = m->n;
@@ -1097,7 +1099,7 @@ int convert_matrix(matrix_t* m, enum matrix_format_t f, enum matrix_base_t b)
 }
 
 // swap upper-to-lower triangular and vice-versa
-static inline void _symmetry_swap(matrix_t* m);
+static inline void _symmetry_swap(matrix_t* m); // not in BOYLE
 static inline void _symmetry_swap(matrix_t* m)
 {
   assert(m->format == SM_COO);
@@ -1160,12 +1162,11 @@ static inline int _symmetry_both( matrix_t* m ) {
     }
   }
   _realloc_arrays(m, m->nz - del);
-  // ignore return value .. we're shrinking the arrays and if the realloc fails we can continue on - well, somehow we can't FIXME
+  // ignore return value .. we're shrinking the arrays and if the realloc fails we can continue on
   return 0;
 }
 
 static inline int _realloc_arrays(matrix_t* m, size_t nz)
-  // realloc fails FIXME
 {
   if (nz == m->nz){ // no reallocation needed
     return 0;
@@ -1225,7 +1226,8 @@ static inline void _coo_merge_duplicate_entries(matrix_t* m)
   int del = 0;
   // expensive: this is O(log(n))?
   assert(m->data_type == REAL_DOUBLE);  // TODO other data types
-  double* d =  m->dd;
+  double* d = (double*) m->dd; // BOYLE
+  //double* d = m->dd;
   for (unsigned i = 0; i < m->nz; i++) {
     for (unsigned j = i + 1; i < m->nz; j++) {
       if ((m->ii[i] == m->ii[j]) && (m->jj[i] == m->jj[j])) {
@@ -1247,7 +1249,7 @@ static inline void _coo_merge_duplicate_entries(matrix_t* m)
 /*! \details Convert from symmetry MC_STORE_BOTH -> LOWER_TRIANGULAR. Note that realloc might fail but we can carry on: no failure cases.
  */
 static inline void _symmetry_lower(
-    matrix_t* m /*! Pointer to the matrix to convert.*/
+    matrix_t* m /*!< Pointer to the matrix to convert.*/
     );
 static inline void _symmetry_lower(matrix_t* m)
 {
@@ -1276,7 +1278,6 @@ static inline void _symmetry_lower(matrix_t* m)
 
 int convert_matrix_symmetry(matrix_t* m, enum matrix_symmetric_storage_t loc)
 {
-  printf("Hey I'm in convert_matrix_symmetry");
   assert(m->sym == SM_SYMMETRIC); //check if matrix has symmetric type
 
   // short circuit if no work to do
@@ -1294,10 +1295,8 @@ int convert_matrix_symmetry(matrix_t* m, enum matrix_symmetric_storage_t loc)
   int ret1 = 0;
   switch (m->location) {
     case MC_STORE_BOTH:
-      printf("I'm MC_STORE_BOTH");
       switch (loc) {
         case MC_STORE_BOTH:  // nothing to do, match
-        printf("Yet I should be MC_STORE_BOTH");
           break;
         case UPPER_TRIANGULAR:
           _symmetry_lower(m);
@@ -1309,10 +1308,8 @@ int convert_matrix_symmetry(matrix_t* m, enum matrix_symmetric_storage_t loc)
       }
       break;
     case UPPER_TRIANGULAR:
-      printf("I'm UPPER_TRIANGULAR");
       switch (loc) {
         case MC_STORE_BOTH:
-        printf("Yet I should be MC_STORE_BOTH");
           ret1 = _symmetry_both(m);
           break;
         case UPPER_TRIANGULAR:
@@ -1323,10 +1320,8 @@ int convert_matrix_symmetry(matrix_t* m, enum matrix_symmetric_storage_t loc)
       }
       break;
     case LOWER_TRIANGULAR:
-      printf("I'm LOWER_TRIANGULAR");
       switch (loc) {
         case MC_STORE_BOTH:
-        printf("Yet I should be MC_STORE_BOTH");
           ret1 = _symmetry_both(m);
           break;
         case UPPER_TRIANGULAR:
