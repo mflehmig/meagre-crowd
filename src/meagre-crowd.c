@@ -56,7 +56,7 @@ int main(int argc, char ** argv)
   const int extra_timing = 0;  // allow extra timing: initialization, matrix loading, etc.
 
   // handle command-line arguments
-  struct parse_args *args = calloc(1, sizeof(struct parse_args));
+  struct parse_args* args = calloc(1, sizeof(struct parse_args));
   // TODO should default to appropriate epsilon for solver, may need to be *2 or some larger value given numerical instability? should print out epsilon of solution in verbose mode
   args->expected_precision = 5e-14;  // TODO was DBL_EPSILON=1.11e-16 but not stored with enough digits? // default to machine epsilon for 'double'
   // args->expected_precision = FLT_EPSILON*2;
@@ -173,11 +173,11 @@ int main(int argc, char ** argv)
       b->dd = malloc(m * sizeof(double));
       b->data_type = REAL_DOUBLE;
       {  // initialize right-hand-side (b)
-        double* d;
-        d = b->dd;
+        double* d = b->dd;
+
         for (unsigned int i = 0; i < m; i++) {
-            *(int *)d = i;
-	          d = (int *)d + 1;
+            *d = i;
+	          d++;
         }
       }
     }
@@ -231,6 +231,7 @@ int main(int argc, char ** argv)
 //    while (r < args->rep);
 
   printf("\nStart solving Ax=b %d time(s) ...\n", args->rep);
+  // for (int i = 1; i <= args->rep; ++i) { // BOYLE
   for (unsigned int i = 1; i <= args->rep; ++i) {
 #if TIMEON
     long long start = current_timestamp();
