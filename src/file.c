@@ -36,97 +36,47 @@
 #include <matio.h>
 #endif
 
-// load a .mat matlab matrix
-// will load the first matrix (sparse or dense) in the file
-// returns 0 on success
+/** \brief load a .mat matlab matrix. Will load the first matrix (sparse or dense) in the file 
+ * \return returns 0 on success
+ */
 static inline
 int read_mat(char const * const filename, matrix_t * const A);
 
-// save a .mat matlab matrix
-// will store a single matrix (sparse or dense) in a .mat file
-// returns 0 on success
+/** \brief save a .mat matlab matrix, will store a single matrix (sparse or dense) in a .mat file
+ * \return returns 0 on success
+ */
 static
 int write_mat(char const * const filename, matrix_t * const A);
 
-// Other formats we should support:
+/** \brief reads Matrix Market file header.
+  * \returns  0 on success, <0 on failure (readmm_strerror(ret) for description), -1 if EOF before parsing header, -2 if not Matrix Market format, -3 if long lines are encountered (MatrixMarket specifies max length of 1024)
+  */
+// TODO Other formats we should support:
 //   Harwell-Boeing (CSC format),
 //   GAMFF (NASA Ames) (graphs, sparse matrices as HB?, dense matrices)
+static inline int readmm_header(
+    FILE* f, input
+    int* object, /**< is -1 unrecognized, 0 matrix */
+    int* format, /**<  is -1 unrecognized, 0 array, 1 coordinate */
+    int* datatype, /**<  is -1 unrecognized, 0 real, 1 integer, 2 complex, 3 pattern */
+    int* symmetry, /**<  is -1 unrecognized, 0 general, 1 symmetric, 2 skew-symmetric, 3 hermitian */
+    int* rows, /**<  dimension of the matrix */
+    int* cols, /**<  dimension of the matrix */
+    int* nz, /**<  dimension of the matrix */
+    char** /**< comments are malloc-ed copy of the comments from the file */
+    );
 
-// input FILE f
-// output object    is -1 unrecognized, 0 matrix
-//        format    is -1 unrecognized, 0 array, 1 coordinate
-//        datatype  is -1 unrecognized, 0 real, 1 integer, 2 complex, 3 pattern
-//        symmetry  is -1 unrecognized, 0 general, 1 symmetric, 2 skew-symmetric, 3 hermitian
-//        rows, cols, nz are dimensions of the matrix
-//        comments are malloc-ed copy of the comments from the file
-// returns  0 on success, <0 on failure (readmm_strerror(ret) for description)
-//         -1 if EOF before parsing header,
-//         -2 if not Matrix Market format
-//         -3 if long lines are encountered (MatrixMarket specifies max length of 1024)
-static inline int readmm_header(FILE* f, int* object, int* format, int* datatype, int* symmetry, int* rows, int* cols,
-                                int* nz, char** comments);
 static inline int readmm_data_dense(FILE* f, matrix_t* A, int datatype, int symmetry, int rows, int cols, int nz);
 static inline int readmm_data_sparse(FILE* f, matrix_t* A, int datatype, int symmetry, int rows, int cols, int nz);
 
-// read a MatrixMarket formatted file
-// input  'filename' to read
+/** \brief read a MatrixMarket formatted file
+ * \return 0 on success, <0 on failure. readmm_error(ret) gives a string explaining the error
+ */
 //        'pref_dense_format'  - if the file turns out to be a dense matrix we'd prefer it to be stored in this format
 //           valid values: DCOL, DROW
 //        'pref_sparse_format' - if the file turns out to be a sparse matrix we'd prefer it to be stored in this format
 //           valid values: SM_COO, SM_CSC, SM_CSR
-// output '*A' is a pointer to the matrix structure to load the data into,
-//                   if NULL no data is loaded
-//        '**comments' is a pointer to a string that will be allocated, of all
-//                   comments collected from the file (for use with
-//                   structured comments, parsed by some other function,
-//                   if NULL, no comments are returned
-// returns  0 on success, <0 on failure
-//          readmm_error(ret) gives a string explaining the error
-int readmm(char const * const filename, matrix_t * const A, char** comments);
-
-char const * readmm_strerror(int err);
-
-char const * readmm_strerror(int err)
-{
-    char const * ret;
-    switch (err) {
-        case 0:
-            ret = "success";
-            break;
-        case -1:
-            ret = "memory allocation failure";
-            break;
-        case -2:
-            ret = "can't open file";
-            break;
-        case -3:
-            ret = "unexpected MatrixMarket header object (matrix)";
-            break;
-        case -4:
-            ret = "unrecognized MatrixMarket header format (coordinate or array)";
-            break;
-        case -5:
-            ret = "unrecognized MatrixMarket header data type";
-            break;
-        case -11:
-            ret = "EOF before header";
-            break;
-        case -12:
-            ret = "not MatrixMarket format, bad header";
-            break;
-        case -13:
-            ret = "lines exceeding 1024 characters";
-            break;
-        default:
-            ret = "unknown";
-            break;
-    }
-    return ret;
-}
-
-int readmm(char const * const filename, matrix_t * const A, char** comments)
-{
-    // references:
+//               // references:
     // [1] http://math.nist.gov/MatrixMarket/formats.html
     // [2] The Matrix Market Exchange Formats: Initial Design,
     //     R. F. Boisvert, R. Pozo, K. Remington,
@@ -171,7 +121,7 @@ int readmm(char const * const filename, matrix_t * const A, char** comments)
     // "<real> <imag>" -- COMPLEX
 
     // additional restrictions: (kind of common-sense)
-    //  * for coordinate AND array, "Hermitian" matrix types can only be "complex"
+    //    //  * for coordinate AND array, "Hermitian" matrix types can only be "complex"
     //  * pattern matrices can only be coordinate format, and general or symmetric
 
     // <format> = coordinate, array
@@ -207,6 +157,55 @@ int readmm(char const * const filename, matrix_t * const A, char** comments)
     //  "%"
     //  "% some more comments"
 
+
+int readmm(
+    char const * const filename, /**< input */
+    matrix_t * const A, /**< output '*A' is a pointer to the matrix structure to load the data into, if NULL no data is loaded */
+    char** comments /**< is a pointer to a string that will be allocated, of all comments collected from the file (for use with structured comments, parsed by some other function, if NULL, no comments are returned */
+    );
+
+char const * readmm_strerror(int err);
+
+char const * readmm_strerror(int err)
+{
+    char const * ret;
+    switch (err) {
+        case 0:
+            ret = "success";
+            break;
+        case -1:
+            ret = "memory allocation failure";
+            break;
+        case -2:
+            ret = "can't open file";
+            break;
+        case -3:
+            ret = "unexpected MatrixMarket header object (matrix)";
+            break;
+        case -4:
+            ret = "unrecognized MatrixMarket header format (coordinate or array)";
+            break;
+        case -5:
+            ret = "unrecognized MatrixMarket header data type";
+            break;
+        case -11:
+            ret = "EOF before header";
+            break;
+        case -12:
+            ret = "not MatrixMarket format, bad header";
+            break;
+        case -13:
+            ret = "lines exceeding 1024 characters";
+            break;
+        default:
+            ret = "unknown";
+            break;
+    }
+    return ret;
+}
+
+int readmm(char const * const filename, matrix_t * const A, char** comments)
+{
     // TODO could have verbose documentation about the format inside the file as comments
 
     FILE* f = fopen(filename, "r");
@@ -255,14 +254,15 @@ int readmm(char const * const filename, matrix_t * const A, char** comments)
     return ret;
 }
 
-// consumes any leading spaces then reads the next avaiable int
-// input string ptr
-// outputs string ptr, first character after int
+/** \brief consumes any leading spaces then reads the next avaiable int
+  * \return returns 0 on success, -1 NaN, -2 not an int/double, -3 sscanf failure (conversion, errno has err code), outputs string ptr, first character after int
+  */
 //         integer i
-//         double k[2] = {real, imaginary}
-//         integer n, number of values: n = 1 for real, n = 2 for complex
-// returns 0 on success, -1 NaN, -2 not an int/double, -3 sscanf failure (conversion, errno has err code)
-static inline int convert_k(char const* const s, double* k, int* n);
+static inline int convert_k(
+    char const* const s, /**< input string ptr*/
+    double* k, /**< double k[2] = {real, imaginary} */
+    int* n /**<  integer n, number of values: n = 1 for real, n = 2 for complex */
+    );
 static inline int convert_ijk(char const * const s, int* i, int* j, double* k, int* n);
 static inline int convert_int(char const ** string, int* i);
 static inline int convert_float(char const ** string, double* i);
@@ -295,11 +295,17 @@ int readmm_data_dense(FILE* f, matrix_t* A, int datatype, int symmetry, int rows
     }
 
     // read in the data
+    // int i; // BOYLE
     double* d = A->dd;
     const int CHARS = 1025;
     char line[CHARS];
     char* lp;
-    lp = "1";
+    lp = "1"; // not in BOYLE
+    //for(i=0; i<nz; i++){
+      //lp=fgets(line, CHARS, f);
+      //if(lp==NULL)
+        //return -2; // bad read
+    //} // BOYLE
     while (lp != NULL) {
         lp = fgets(line, CHARS, f);
     }
@@ -390,6 +396,12 @@ int readmm_data_sparse(FILE* f, matrix_t* A, int datatype, int symmetry, int row
         if (ret != 0)
             return ret - 20;  // bad data
         if (((datatype == 0) && (n != 1)) || ((datatype == 2) && (n != 2)))
+            return -3;  //bad data (unexpected complex/real)
+
+        // advance the data pointers
+        ii++;
+        jj++;
+        switch (datatype) {
             return -3;  //bad data (unexpected complex/real)
 
         // advance the data pointers
@@ -503,12 +515,6 @@ static inline int readmm_header(FILE* f, int* object, int* format, int* datatype
 
             // read in the next line
             lp = fgets(line, CHARS, f);
-        }
-        while ((*lp == '%') || is_eol(*lp));
-    }
-    // lp now points to the first non-blank line after the comments
-
-    // find matrix dimensions
     if (*format == 0) {  // dense array, expecting "  <rows> <columns>"
         int err1 = convert_int(&lp, rows);
         int err2 = convert_int(&lp, cols);
@@ -635,9 +641,13 @@ int is_eol(const char c)
 
 static int _identify_format_from_extension(char* n, enum sparse_matrix_file_format_t* ext, int is_input);
 
-// load a matrix from file "n" into matrix A
-// returns 0: success, <0 failure
-int load_matrix(char* n, matrix_t* A)
+/** \brief load a matrix from file "n" into matrix A
+ * \return 0: success, <0 failure
+ */
+int load_matrix(
+    char* n, 
+    matrix_t* A
+    )
 {
     assert(A != NULL);
     if (n == NULL) {
@@ -680,9 +690,13 @@ int load_matrix(char* n, matrix_t* A)
 static inline
 int writemm(char const* const filename, matrix_t* AA, char const * const comment, enum sparse_matrix_file_format_t ext);
 
-// save a matrix into file "n" from matrix A
-// returns 0: success, 1: failure
-int save_matrix(matrix_t* AA, char* n)
+/** \brief save a matrix into file "n" from matrix A
+ * \return 0: success, 1: failure
+ */
+int save_matrix(
+    matrix_t* AA, 
+    char* n
+    )
 {
     if (n == NULL) {
         fprintf( stderr, "output error: No output specified (-o)\n");
@@ -744,16 +758,20 @@ int writemm(char const* const filename, matrix_t* AA, char const * const comment
     return 0;  // success
 }
 
-// returns number of rows in matrix A
-/*inline*/ unsigned int matrix_rows(const matrix_t* const A)
+/** \return number of rows in matrix A
+ */
+/*inline*/ unsigned int matrix_rows(
+    const matrix_t* const A
+    )
 {
     if (A == NULL)
         return 0;
     return A->m;
 }
 
-// identify the file format from the extension
-// return 0: success, 1: failure
+/** \brief identify the file format from the extension
+  * \return 0: success, 1: failure
+  */
 // Note: static -- only visible w/in this file
 static int _identify_format_from_extension(char* n, enum sparse_matrix_file_format_t* ext, int is_input)
 {
@@ -803,11 +821,14 @@ static int _identify_format_from_extension(char* n, enum sparse_matrix_file_form
     }
 }
 
-// save a .mat matlab matrix
-// will store a single matrix (sparse or dense) in a .mat file
-// returns 0 on success
+/** \brief save a .mat matlab matrix, will store a single matrix (sparse or dense) in a .mat file
+* \return 0 on success
+*/
 static
-int write_mat(char const * const filename, matrix_t * const A)
+int write_mat(
+    char const * const filename, 
+    matrix_t * const A
+    )
 {
 #ifndef HAVE_MATIO
     return 1;
@@ -854,11 +875,38 @@ int write_mat(char const * const filename, matrix_t * const A)
 #endif
 }
 
-// load a .mat matlab matrix
-// will load the first matrix (sparse or dense) in the file
-// returns 0 on success
+/** \brief load a .mat matlab matrix, will load the first matrix (sparse or dense) in the file
+  * \return 0 on success
+  */
 static
-int read_mat(char const * const filename, matrix_t * const A)
+int read_mat(
+    char const * const filename, 
+    matrix_t * const A
+    )
+{
+#ifndef HAVE_MATIO
+    return 1;
+#else
+    const int LOCAL_DEBUG = 0;
+    mat_t* matfp;
+    matfp = Mat_Open(filename, MAT_ACC_RDONLY);
+    if (matfp == NULL)
+        return 1;  // failed to open file
+
+    matvar_t* t;
+    int more_data = 1;
+
+    while (more_data) {
+        t = Mat_VarReadNextInfo(matfp);
+        if (t == NULL) {
+/** \brief load a .mat matlab matrix, will load the first matrix (sparse or dense) in the file
+  * \return 0 on success
+  */
+static
+int read_mat(
+    char const * const filename, 
+    matrix_t * const A
+    )
 {
 #ifndef HAVE_MATIO
     return 1;
@@ -915,7 +963,7 @@ int read_mat(char const * const filename, matrix_t * const A)
 //        ret = 10;  // TODO can't handle complex matrices yet
 //    }
 //    else if (t->isLogical) {
-//        ret = 11;  // TODO can't handle logicals yet
+//        ret = 11;  // TODO can't handle logicals yet // BOYLE
     A->sym = SM_UNSYMMETRIC;
     //if(t->data_type == MAT_T_DOUBLE) {
     A->data_type = REAL_DOUBLE;
@@ -957,30 +1005,6 @@ int read_mat(char const * const filename, matrix_t * const A)
         //if(t->data_type == MAT_T_DOUBLE) {
         A->data_type = REAL_DOUBLE;
         //} // TODO complex, single precision, various sized integers
-
-        if (t->class_type == MAT_C_SPARSE) {  // t.data = sparse_t in CSC format
-            // Note that Matlab will save('-v4'...) a sparse matrix
-            // to version 4 format without complaint but it appears
-            // to be gibberish as far as MatIO is concerned
-            mat_sparse_t* st = t->data;
-            A->nz = st->ndata;  //st->nzmax has the actual size of the allocated st->data
-            A->format = SM_CSC;
-            // transfer the data pointer into our strucut
-            // TODO check for negative values in ir/jc before throwing away their signs
-            A->ii = (unsigned int*) st->ir;
-            st->ir = NULL;
-            A->jj = (unsigned int*) st->jc;
-            st->jc = NULL;
-            A->dd = st->data;
-            st->data = NULL;
-        }
-        else if (t->class_type == MAT_C_DOUBLE) {
-            A->nz = A->m * A->n;
-            A->format = DCOL;
-            // transfer the data pointer into our struct
-            A->dd = t->data;
-            t->data = NULL;
-        }
         else {
             ret = 4;  // unknown class of data structure
         }
