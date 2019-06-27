@@ -34,7 +34,6 @@ AC_CONFIG_SRCDIR([src/meagre-crowd.c])
 AC_CONFIG_HEADERS([src/config.h])
 
 AC_USE_SYSTEM_EXTENSIONS
-
 dnl CFLAGS="-std=c99 $CFLAGS"
 
 # debugging
@@ -81,7 +80,8 @@ dnl AM_PROG_CC_C_O
 
 # mpicxx
 ACXX_MPI
- AC_PROG_CPP([$MPICXX])
+ AC_PROG_CXX([$MPICXX])
+ AC_SUBST(MPILIBS)
 # Checks for libraries.
 
 # BeBOP: matrix market file format
@@ -215,11 +215,11 @@ else
 fi
 AM_CONDITIONAL(HAVE_SUPERLU_DIST,[test "x$have_superlu_dist" = "xyes"])
 
-
 # check for superlu
 AC_LANG_PUSH(C++)
 CXXFLAGS="$CXXFLAGS -fopenmp" # don't have to be saved, they are substituted earlier
 MC_WITH_LIB([SUPERLU], [sgssvx],[superlu])
+
 AC_LANG_POP()
 
 # check for pardiso
