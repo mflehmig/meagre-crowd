@@ -22,9 +22,10 @@ AT_COLOR_TESTS
 
 AT_TESTED(AT_PACKAGE_NAME)
 
-m4_define(MC_DATA_FILE_TEST_MM,[AT_DATA([unsym.mtx],]m4_include(tests/unsym.mtx)[)])
-m4_define(MC_DATA_FILE_TEST_RB,[AT_DATA([test.rb],]m4_include(tests/test.rb)[)])
-m4_define(MC_DATA_FILE_TEST_HB,[AT_DATA([test.hb],]m4_include(tests/test.hb)[)])
+m4_define(MC_DATA_FILE_TEST_MM,[AT_DATA([unsym.mtx],]m4_include([tests/unsym.mtx])[)])
+m4_define(MC_DATA_FILE_TEST_RB,[AT_DATA([test.rb],]m4_include([tests/test.rb])[)])
+m4_define(MC_DATA_FILE_TEST_HB,[[AT_DATA([[test.hb]],]]m4_include([tests/test.hb])[)])
+dnl m4_define(MC_DATA_FILE_TEST_HB, [AT_DATA([[test.hb]],] [[tests/test.hb]]))
 dnl need to convert the binary file to safe text to stash it in the testsuite script
 m4_define(MC_DATA_FILE_TEST_MAT,
   [AT_DATA([unsym7.mat-xxd],m4_esyscmd(xxd -p tests/unsym7sp.mat))]
@@ -113,10 +114,14 @@ AT_SKIP_IF([test "x$have_wsmp" != "xyes"])
 AT_CHECK([WSMPLICPATH=~ helloworld-wsmp],0,[],ignore)
 AT_CLEANUP
 
-AT_SETUP([read matrix - harwell-boeing, rutherford-boeing, matrix market])
+dnl == Test 10: read matrix
+AT_SETUP([read matrix])
 AT_KEYWORDS([file hello])
+MC_DATA_FILE_TEST_HB
+MC_DATA_FILE_TEST_RB
 MC_DATA_FILE_TEST_MM
-AT_CHECK([file],0,[
+AT_CHECK([file],0,[harwell-boeing
+rutherford-boeing
 matrix market
 PASS
 ])
