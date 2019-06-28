@@ -22,9 +22,9 @@ AT_COLOR_TESTS
 
 AT_TESTED(AT_PACKAGE_NAME)
 
-m4_define(MC_DATA_FILE_TEST_MM,[AT_DATA([unsym.mtx],]m4_include([tests/unsym.mtx])[)])
-m4_define(MC_DATA_FILE_TEST_RB,[AT_DATA([test.rb],]m4_include([tests/test.rb])[)])
-m4_define(MC_DATA_FILE_TEST_HB,[[AT_DATA([[test.hb]],]]m4_include([tests/test.hb])[)])
+m4_define(MC_DATA_FILE_TEST_MM,[AT_DATA([unsym.mtx],]m4_include(tests/unsym.mtx)[)])
+m4_define(MC_DATA_FILE_TEST_RB,[AT_DATA([test.rb],]m4_include(tests/test.rb)[)])
+m4_define(MC_DATA_FILE_TEST_HB,[AT_DATA([test.hb],]m4_include(tests/test.hb)[)])
 dnl m4_define(MC_DATA_FILE_TEST_HB, [AT_DATA([[test.hb]],] [[tests/test.hb]]))
 dnl need to convert the binary file to safe text to stash it in the testsuite script
 m4_define(MC_DATA_FILE_TEST_MAT,
@@ -199,7 +199,7 @@ AT_DATA([broken.mtx],[ Jibberish file
 not even the right format
 ])
 # TODO clean up the garbage left by read_matrix_market_sparse when it fails (turn it off somehow?)
-AT_CHECK(AT_PACKAGE_NAME -i broken.mm,1,,[input error: Failed to load matrix
+AT_CHECK(AT_PACKAGE_NAME -i broken.mtx,1,,[input error: Failed to load matrix
 ])
 AT_CLEANUP
 

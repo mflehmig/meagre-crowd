@@ -48,12 +48,13 @@ int get_mpi_num_procs()
  *
  * \remark This (read-only) value does not influence the solver behaviour!
  */
-int get_omp_num_threads()
+int get_omp_num_threads(unsigned int verbosity)
 {
   int num_threads;
   const char* omp_threads = getenv("OMP_NUM_THREADS");
   if (omp_threads == NULL) {  // no env value configured
-    printf("Env. variable OMP_NUM_THREADS is not defined.\n");
+    if (1 <= verbosity)
+      printf("Env. variable OMP_NUM_THREADS is not defined.\n");
 #ifdef _OPENMP
     num_threads = omp_get_max_threads();
 #else

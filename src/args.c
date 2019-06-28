@@ -213,7 +213,8 @@ Options:";
   }
 
   if (args->rep == 0) {
-    printf("INFO: Number of calculation repetitions not specified. Set it to 1 by default.\n");
+    if (1 <= args->verbosity)
+      printf("INFO: Number of calculation repetitions not specified. Set it to 1 by default.\n");
     args->rep = 1;
   }
 

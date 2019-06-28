@@ -50,7 +50,7 @@ int get_mpi_num_procs();
  *
  * \remark This (read-only) value does not influence the solver behaviour!
  */
-int get_omp_num_threads();
+int get_omp_num_threads(unsigned int verbosity);
 
 /** \brief Print configuration
  *

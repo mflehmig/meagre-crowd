@@ -23,7 +23,7 @@
  * Solution is [1 2]ˆT */
 
 
-#define TIMEON 1
+#define TIMEON 0
 
 #include "config.h"
 
@@ -93,7 +93,7 @@ int main(int argc, char ** argv)
   //      // printf( "OMPI_COMM_WORLD_SIZE=%d\n", c_mpi );
   //    }
   //  }
-  int c_omp = get_omp_num_threads();
+  int c_omp = get_omp_num_threads(args->verbosity);
 
   const int is_mpi = (requires_mpi || (uses_mpi && (c_mpi != 0)));
   const int is_omp = (requires_omp || (uses_omp && (c_omp != 0)));
@@ -230,19 +230,20 @@ int main(int argc, char ** argv)
 //    }
 //    while (r < args->rep);
 
-  printf("\nStart solving Ax=b %d time(s) ...\n", args->rep);
+  if (args->verbosity >= 1)
+    printf("\nStart solving Ax=b %d time(s) ...\n", args->rep);
   // for (int i = 1; i <= args->rep; ++i) { // BOYLE
+  long long start, finish;
   for (unsigned int i = 1; i <= args->rep; ++i) {
-#if TIMEON
     long long start = current_timestamp();
-#endif
     solver_solve(state, A, b, rhs);  // TODO rhs -> x
-#if TIMEON
-    long long finish = current_timestamp();
-    printf("Iteration %d\t time %lld\n", i, (finish-start));
-#endif
+    if (args->verbosity >= 1) {
+      finish = current_timestamp();
+      printf("Iteration %d\t time %lld\n", i, (finish-start));
+    }
   }
-  printf("Done.\n");
+  if (args->verbosity >= 1)
+    printf("Done.\n");
 
   if (extra_timing && args->rep == 0) {
     perftimer_inc(timer, "clean up", -1);
