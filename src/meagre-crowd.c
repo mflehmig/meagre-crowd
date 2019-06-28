@@ -274,7 +274,7 @@ int main(int argc, char ** argv)
     }
     else {
       retval = 100;
-      printf("  FAIL.\n");
+      fprintf(stderr, "  FAIL.\n");
     }
   }
 

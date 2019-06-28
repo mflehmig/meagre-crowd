@@ -776,7 +776,8 @@ int writemm(char const* const filename, matrix_t* AA, char const * const comment
 static int _identify_format_from_extension(char* n, enum sparse_matrix_file_format_t* ext, int is_input)
 {
     size_t s = strnlen(n, 100);
-    char *e = n + s - 4;
+    // Point to last . in n
+    char *e = strrchr(n,'.');
 
     // strcmp returned match
     if ((s > 4) && (strncmp(e, ".mtx", 100) == 0)) {
@@ -799,7 +800,7 @@ static int _identify_format_from_extension(char* n, enum sparse_matrix_file_form
             fprintf( stderr, "output error: Sorry Rutherford-Boeing writer is broken\n");
         return 1;  // failure
     }
-    else if ((s > 4) && (strncmp(e - 1, ".mat", 100) == 0)) {
+    else if ((s > 4) && (strncmp(e, ".mat", 100) == 0)) {
         *ext = MATLAB;
 #ifdef HAVE_MATIO
         return 0;
