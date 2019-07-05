@@ -170,11 +170,11 @@ void solver_evaluate_superlu_dist( solver_state_t* s, matrix_t* b, matrix_t* x )
   // TODO If info != 0 the solver failed. Thus return error code and do not compare results.
   if(!s->mpi_rank) {
     if (info == 0)
-      printf("pdgssvx_ABglobal() returns info %d which means FINE\n", info);
+      fprintf(stderr, "pdgssvx_ABglobal() returns info %d which means FINE\n", info);
     if (info > 0 && info <= b->m)
-      printf("pdgssvx_ABglobal() returns info %d which means U(%d,%d) is exactly zero\n", info, info, info);
+      fprintf(stderr, "pdgssvx_ABglobal() returns info %d which means U(%d,%d) is exactly zero\n", info, info, info);
     if (info > 0 && info > b->m)
-      printf("pdgssvx_ABglobal() returns info %d which means memory allocation failed\n", info);
+      fprintf(stderr, "pdgssvx_ABglobal() returns info %d which means memory allocation failed\n", info);
   }
 
   // TODO calculate inf_norm
@@ -229,7 +229,7 @@ void solver_finalize_superlu_dist( solver_state_t* s ) {
 colperm_t getSuperLUOrdering()
 {
   colperm_t ret = NATURAL;  // Default value.
-  printf("SuperLU_dist Ordering: ");
+  fprintf(stderr, "SuperLU_dist Ordering: ");
   const char* env_p = getenv("ORDERING");
   // if(const char* env_p = getenv("ORDERING")) {
   if (env_p != NULL)
@@ -238,32 +238,32 @@ colperm_t getSuperLUOrdering()
     //if (env.compare("NATURAL") == 0) {
     if (strcmp(env_p, "NATURAL") == 0)
     {
-      printf("NATURAL\n");
+      fprintf(stderr, "NATURAL\n");
       return NATURAL;
     }
     if (strcmp(env_p, "MMD_ATA") == 0)
     {
-      printf("MMD_ATA\n");
+      fprintf(stderr, "MMD_ATA\n");
       return MMD_ATA;
     }
     if (strcmp(env_p, "MMD_AT_PLUS_A") == 0)
     {
-      printf("MMD_AT_PLUS_A\n");
+      fprintf(stderr, "MMD_AT_PLUS_A\n");
       return MMD_AT_PLUS_A;
     }
     if (strcmp(env_p, "COLAMD") == 0)
     {
-      printf("COLAMD\n");
+      fprintf(stderr, "COLAMD\n");
       return COLAMD;
     }
     if (strcmp(env_p, "METIS_AT_PLUS_A") == 0)
     {
-      printf("METIS_AT_PLUS_A\n");
+      fprintf(stderr, "METIS_AT_PLUS_A\n");
       return METIS_AT_PLUS_A;
     }
     if (strcmp(env_p, "PARMETIS") == 0)
     {
-      printf("PARMETIS\n");
+      fprintf(stderr, "PARMETIS\n");
       return PARMETIS;
     }
     // ZOLTAN is only defined in SuperLU, not in SuperLU_MT. But since the user
@@ -276,9 +276,10 @@ colperm_t getSuperLUOrdering()
 //      //printf( "MY_PERMC\n";
 //      ret = MY_PERMC;
 //    }
-    printf("Info: Not a valid Ordering. Use COLAMD.\n");
+    fprintf(stderr, "Info: Not a valid Ordering. Use COLAMD.\n");
   }
-  printf("NATURAL\n");
+  // Default
+  fprintf(stderr, "NATURAL\n");
   return ret;
 }
 

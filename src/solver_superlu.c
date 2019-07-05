@@ -47,7 +47,7 @@ typedef struct {
 
 void solver_init_superlu( solver_state_t* s ) {
   assert( s != NULL );
-  solve_system_superlu_t * const p = calloc( 1, sizeof( solve_system_superlu_dist_t ) );
+  solve_system_superlu_t * const p = calloc( 1, sizeof( solve_system_superlu_t ) );
   assert( p != NULL );
   s->specific = p;
 

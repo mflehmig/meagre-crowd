@@ -316,7 +316,7 @@ static const struct solver_properties_t solver_lookup[] = {
 #endif
 
 #ifdef HAVE_SUPERLU_DIST
-  { "superlu", "SuperLU_DIST", "X. Sherry Li et al", "Lawrence Berkeley National Lab/Univ. of California, Berkley", "2.5", "BSD-new",
+  { "superlu_dist", "SuperLU_DIST", "X. Sherry Li et al", "Lawrence Berkeley National Lab/Univ. of California, Berkley", "2.5", "BSD-new",
     "http://crd.lbl.gov/~xiaoye/SuperLU/",
     &solver_init_superlu_dist,
     &solver_analyze_superlu_dist,
@@ -335,6 +335,24 @@ static const struct solver_properties_t solver_lookup[] = {
     "        for Sparse LU with Static Pivoting, SIAM J. Scientific Computing,\n"
     "        vol 29, no 3, pp1289--1314, 2007\n" },
 #endif
+
+#ifdef HAVE_SUPERLU
+  { "superlu", "SuperLU", "X. Sherry Li et al", "Lawrence Berkeley National Lab/Univ. of California, Berkley", "5.2.x", "BSD-new",
+    "http://crd.lbl.gov/~xiaoye/SuperLU/",
+    &solver_init_superlu,
+    &solver_analyze_superlu,
+    &solver_factorize_superlu,
+    &solver_evaluate_superlu,
+    &solver_finalize_superlu,
+    SOLVES_FORMAT_CSC | SOLVES_BASE_ZERO | SOLVES_UNSYMMETRIC | SOLVES_SQUARE_ONLY |
+    // TODO SOLVES_FORMAT_CSR
+    SOLVES_DATA_TYPE_REAL_DOUBLE | // TODO and COMPLEX (single and double precision)
+    SOLVES_RHS_DCOL,
+    SOLVER_SINGLE_THREADED_ONLY,
+    " TODO: Add references\n"
+  },
+#endif
+
 
   // Note: MUST have null entry at the end of the list!
   {0}
