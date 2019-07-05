@@ -37,7 +37,6 @@ AC_USE_SYSTEM_EXTENSIONS
 dnl CFLAGS="-std=c99 $CFLAGS"
 
 # debugging
-
 AC_MSG_CHECKING(whether to enable debugging)
 default="yes"
 DEBUG=
@@ -51,6 +50,7 @@ if test "x$enable_debug" = "xyes"; then
 else
   AC_MSG_RESULT(no)
 fi
+
 # profiling
 AC_MSG_CHECKING(whether to enable profiling)
 default="no"
@@ -142,7 +142,7 @@ AS_IF([test "x$with_all_solvers" = "xyes"],
 dnl test for library unless explicitly disabled
 MC_EXTRA_CODE
 AS_IF([test "x$with_]MC_LOWERNAME[" != "xno"],
-      [
+      [ LIBS_OLD="$LIBS"
         AC_SEARCH_LIBS(]MC_FUNC[,]MC_LIB[,have_]MC_LOWERNAME[=yes,have_]MC_LOWERNAME[=no,]MC_EXTRA_FLAGS[)
       ],
       [have_]MC_LOWERNAME[=no
@@ -153,7 +153,11 @@ AS_IF([test "x$with_]MC_LOWERNAME[" != "xno"],
 dnl if its found, then all good
 dnl if it wasn't found and it was required, then error
 AS_IF([test "x$have_]MC_LOWERNAME[" = "xyes"],
-      [AC_DEFINE(HAVE_]MC_UPPERNAME[,1,]MC_FULLNAME[ solver is available)],
+      [
+      	dnl Append!
+      	LIBS="$LIBS_OLD $ac_cv_search_]MC_FUNC["
+      	AC_DEFINE(HAVE_]MC_UPPERNAME[,1,]MC_FULLNAME[ solver is available)
+      ],
       [test "x$with_]MC_LOWERNAME[" = "xyes"],
       [AC_MSG_ERROR(]MC_FULLNAME[ solver requested but not found)]
       )
@@ -183,6 +187,7 @@ MC_WITH_LIB([CHOLMOD], [cholmod_solve], [cholmod])
 # TODO TAUCS depends on CILK?
 MC_WITH_LIB([TAUCS],   [taucs_linsolve],[taucs])
 
+
 # check for SuperLU_dist
 # TODO this doesn't make much sense, we have to turn superlu_dist on to use it but all the other solvers are default
 dnl check if we want superlu_dist
@@ -191,17 +196,21 @@ AC_ARG_WITH([superlu_dist], [AS_HELP_STRING([--with-superlu_dist])],
             [want_superlu_dist=no]
            )
 dnl if yes
+dnl Todo: Change to: AS_IF([test "x$want_superlu_dist" = "xyes"],
 if test "x$want_superlu_dist" = xyes; then
-  AC_MSG_NOTICE([Hei, I want superlu_dist!])
   AC_SEARCH_LIBS([metis_free], [metis], have_metis=yes , AC_MSG_ERROR([missing METIS library - needed by superlu_dist]))
   AC_SEARCH_LIBS([parmetis_v3_nodend], [parmetis], have_parmetis=yes , AC_MSG_ERROR([missing parMETIS library - needed by superlu_dist]))
-  AC_SEARCH_LIBS([parmetis_v3_nodend], [parmetis], have_parmetis=yes , AC_MSG_ERROR([missing parMETIS library - needed by superlu_dist]))
   AC_LANG_PUSH(C++)
-  AC_SEARCH_LIBS([mm_strdup], [CombBLAS], have_combblas=yes , AC_MSG_ERROR([missing Combinatorial BLAS CombBLAS library- needed by superlu_dist]))
+  LIBS_OLD="$LIBS"
+  AC_SEARCH_LIBS([mm_strdup], [CombBLAS],
+                 [have_combblas=yes
+                  LIBS="$LIBS_OLD $ac_cv_search_mm_strdup"
+                 ],
+                 AC_MSG_ERROR([missing Combinatorial BLAS CombBLAS library- needed by superlu_dist])
+                )
   AC_LANG_POP()
   CFLAGS="$CFLAGS -fopenmp"
   MC_WITH_LIB([SUPERLU_DIST], [superlu_gridinit],[superlu_dist], ,[-lCombBLAS -lopenblas -lmetis -lparmetis -lmpi_cxx])
-dnl  AC_LANG_POP()
   AC_CHECK_HEADERS([superlu_ddefs.h])
   # Okay, if we are here, than every thing is found and we need to link -lmpi_cxx
   LIBS="$LIBS -lmpi_cxx"
@@ -219,7 +228,6 @@ AM_CONDITIONAL(HAVE_SUPERLU_DIST,[test "x$have_superlu_dist" = "xyes"])
 AC_LANG_PUSH(C++)
 CXXFLAGS="$CXXFLAGS -fopenmp" # don't have to be saved, they are substituted earlier
 MC_WITH_LIB([SUPERLU], [sgssvx],[superlu])
-
 AC_LANG_POP()
 
 # check for pardiso
